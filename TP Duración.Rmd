@@ -10,11 +10,22 @@ execute:
   message: false
 ---
 
+
+```{r CHAT}
+# holandaaaa se me ocurrió que podemos ir hablando por acá (igual pusé comentarios más abajo jeje)
+```
+
+
 ```{r Librerias, include=FALSE}
 
 library(readr)
 library(tibble)
 library(tidyverse)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(RColorBrewer) # Paletas
+
 ```
 
 ```{r Cargando los datos, include = F}
@@ -25,7 +36,8 @@ datos <- read_csv("conjunto_grupo_7.csv")
 View(datos)
 summary(datos)
 
- 
+# Para ver paletas de colores: (Me gustó la RdBu)
+# display.brewer.all()
 ```
 
 _Variables_
@@ -38,7 +50,7 @@ _Variables_
 
  - Complicacion:  indicadora  de  la  presencia  de  complicación
                   severa  (1:  Presente,  0: Censura)
-                                                                              Censura)
+                                                                             
  - Edad: edad del paciente al momento de iniciar su seguimiento
           (en años)
 
@@ -74,27 +86,70 @@ ggplot(datos, aes(x = edad)) +
   theme_bw()
 ```
 
-```{r Boxplot}
+```{r Fumadores, echo  = F}
 # Boxplot fumadores:
-# Poner color
+#
+#  hola juaaaan quería poner una paleta de colores y le estaba preguntando cosas al chat pero metengoqueiracomer así que pushié hasta donde quedé, pero la idea era poner mejor los colores, no me gusta que parece blanco el segundo boxplot (cosas irrelevantes pero weno tocs)
+#  después de comer seguramente siga, nos vamo mandandoo 
 datos %>% 
   group_by(fumador) %>% 
-  ggplot(aes(x = fumador, y = tiempo)) + 
+  ggplot(aes(x = fumador, y = tiempo, fill = fumador)) + 
   geom_boxplot() +
+  scale_fill_brewer(palette = "RdBu")+
   theme_bw()
 
 ```
-```{r}
-#
- # VER si usar o no
+
+```{r Actividad, echo = F}
+#BORRAR ???
+ # VER si usar o no 
+# datos %>% 
+#   group_by(actividad) %>% 
+#   ggplot(aes(x = actividad, y = tiempo)) + 
+#   geom_boxplot() +
+#   theme_bw()
+
+
+ # BORRAR????
+# Intentando una tabla, capaz es más útil que un gráfico en este caso:
+# datos %>% 
+#   group_by(actividad) %>% 
+#   summarise(
+#      n = n(),
+#     media = mean(tiempo),
+#     mediana = median(tiempo),
+#     sd = sd(tiempo)
+#    )
+
+
+# DEJAR ESTA ?
+# Esta me gusta más:
 datos %>% 
+  mutate(
+    actividad = str_to_title(as.character(actividad)),
+        actividad = factor(actividad,
+                       levels = c("Alta", "Moderada", "Baja"))
+) %>% 
   group_by(actividad) %>% 
-  ggplot(aes(x = actividad, y = tiempo)) + 
-  geom_boxplot() +
-  theme_bw()
+  summarise(
+    n = n(),
+    media = mean(tiempo),
+    mediana = median(tiempo),
+    sd = sd(tiempo)
+  ) %>%
+  mutate(
+    across(where(is.numeric),
+           ~round(.x, 2))) %>%
+  kable(    
+    caption = "Medidas descriptivas de los pacientes según nivel de actividad física",
+    col.names = c("Actividad","n", "Media", "Mediana", "Desvío estándar")) %>% 
+      kable_styling(latex_options = c("responsive", "hold_position"))
+
+
+
 ```
 
-```{r}
+```{r Comorbilidad, echo = F}
 # Comorbilidad:
 ggplot(datos, aes(x = tiempo, y = comorbilidades)) +
   geom_count(aes(alpha = after_stat(n)), shape = 16, size = 3) +
