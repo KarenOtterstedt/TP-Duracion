@@ -1,0 +1,222 @@
+---
+title: "Trabajo Práctico Análisis de Duración"
+author: "Karen Otterstedt Juan Sebastían Reines Urieles"
+date: "2025-05-16"
+output:
+  pdf_document:
+    latex_engine: xelatex
+execute:
+  warning: false
+  message: false
+---
+
+
+```{r CHAT, include = F}
+# holandaaaa se me ocurrió que podemos ir hablando por acá (igual pusé comentarios más abajo jeje)
+```
+
+<!-- COMENTARIO EN RMARKDOWN QUE SUPUESTAMENTE NO APARECE:
+LISTA DE COSAS PARA HACER: (esta es la lista que ni puedo hacer, seleccionamos el modelo que queremos, comparamos los distintos niveles, y después qué? Concluimos? IC? Qué mas? jashtag PERDIDA :( 
+    - Análisis descriptivo de los datos
+    - Selección de modelos
+    - Conclusiones
+    -->
+
+
+```{r Seteando_opciones, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+```{r Librerias, include = F}
+
+library(readr)
+library(tibble)
+library(tidyverse)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(RColorBrewer) # Paletas
+
+```
+
+```{r Cargando los datos, include = F}
+# ------------ Cargando los datos  ------------
+# Somos el grupo 7 así que nos corresponde el dataset 7:
+
+datos <- read_csv("conjunto_grupo_7.csv")
+View(datos)
+summary(datos)
+```
+
+```{r Paleta de colores, include = F}
+# Para ver paletas de colores: (Me gustó la RdBu, pero decime voooos)
+# display.brewer.all()
+
+# Para ver cuántos colores tiene la paleta:
+# brewer.pal.info["RdBu", "maxcolors"]
+
+
+# Para que los muestre:
+# display.brewer.pal(n = 11, "RdBu")
+
+# Para los nombres de los colores:
+# brewer.pal(n = 11, name = "RdBu")
+
+# Para ver qué color es cuál:
+# colores <- brewer.pal(11, "RdBu")
+# barplot(rep(1, 11), col = colores, names.arg = colores, las = 2)
+
+# Ver de ponerles nombres
+# colores <- brewer.pal(11, "RdBu")
+# names(colores) <- c("RojoOscuro", "Rojo", "Rosa", "Salmón", "Beige",
+#                     "Gris", "Celeste", "AzulClaro", "Azul", "AzulOscuro", "AzulMuyOscuro")
+
+```
+
+_Variables_
+
+ - ID: número de identificación del paciente
+
+ - Tiempo: tiempo en meses desde el diagnóstico de la
+           enfermedad crónica respiratoria hasta que presenta
+           la complicación severa o termina su período de seguimiento
+
+ - Complicacion:  indicadora  de  la  presencia  de  complicación
+                  severa  (1:  Presente,  0: Censura)
+                                                                             
+ - Edad: edad del paciente al momento de iniciar su seguimiento
+          (en años)
+
+ - Sexo: sexo biológico del paciente
+
+ - Fumador: indicadora de si el paciente es fumador activo o no
+
+ - Actividad:  nivel  de  actividad  física  del  paciente  categorizado
+               en  actividad  baja, moderada o alta
+
+ - Comorbilidades: número de comorbilidades que presenta el paciente
+                   (el 0 indica que no tiene ninguna comorbilidad)
+
+   presencia de dos o más enfermedades o afecciones en una misma
+   persona al mismo tiempo
+
+
+
+```{r Analisis Descriptivo, echo = F}
+
+# ------------ Análisis descriptivo ------------
+
+ # IDEAS:
+ # - Histograma de edad
+ # - Diagrama de torta de sexo biológico?
+ # - Boxplot de los tiempos para fumadores/ no fumadores?
+ # - Boxplot de los tiempos para distintos niveles de actividad física?
+
+# Histograma:
+# VER
+ggplot(datos, aes(x = edad)) +
+  geom_histogram(fill = "#92C5DE", color = "white") +
+  theme_bw()
+```
+
+```{r Fumadores, echo  = F}
+# Boxplot fumadores:
+datos %>% 
+  group_by(fumador) %>% 
+  ggplot(aes(x = fumador, y = tiempo, fill = fumador)) + 
+  geom_boxplot() +
+  scale_fill_manual(values = c("#92C5DE", "#F4A582"))+
+  labs (x = "Fumador", y = "Tiempo (en meses)") +
+  scale_x_discrete(label = c("No", "Si")) +
+  theme_bw() +
+  theme(legend.position = "none") 
+
+
+```
+A pesar de presentar algunos outliers, puede verse que aquellos pacientes que padecieron cierta enfermedad crónica respiratoria y fuman presentaron menores tiempos de supervivencia que sus contrapartes que no fuman. 
+Los pacientes que fuman parecen casi en su totalidad presentar tiempos de supervivencia menores que el 50% de aquellos que no son fumadores activos.
+
+```{r Actividad, echo = F}
+#BORRAR ???
+ # VER si usar o no 
+# datos %>% 
+#   group_by(actividad) %>% 
+#   ggplot(aes(x = actividad, y = tiempo)) + 
+#   geom_boxplot() +
+#   theme_bw()
+
+
+ # BORRAR????
+# Intentando una tabla, capaz es más útil que un gráfico en este caso:
+# datos %>% 
+#   group_by(actividad) %>% 
+#   summarise(
+#      n = n(),
+#     media = mean(tiempo),
+#     mediana = median(tiempo),
+#     sd = sd(tiempo)
+#    )
+
+
+# DEJAR ESTA ?
+# Esta me gusta más:
+datos %>% 
+  mutate(
+    actividad = str_to_title(as.character(actividad)),
+        actividad = factor(actividad,
+                       levels = c("Alta", "Moderada", "Baja"))) %>% 
+  group_by(actividad) %>% 
+  summarise(
+    n = n(),
+    media = mean(tiempo),
+    mediana = median(tiempo),
+    sd = sd(tiempo)
+  ) %>%
+  mutate(
+    across(where(is.numeric),
+           ~round(.x, 2))) %>%
+  kable(
+    caption = "Medidas descriptivas de los pacientes según nivel \\ de actividad física",
+    col.names = c("Actividad", "n", "Media", "Mediana", "Desvío estándar"),
+    escape = F) %>%
+  kable_styling(latex_options = c("responsive", "hold_position"))
+
+
+
+```
+Pocas personas de las que participaron en el estudio, realizan altos niveles de actividad física, sin embargo, no parecería haber una gran diferencia entre los tiempos de las personas que realizan moderadas y bajas cantidades de actividad física.
+
+```{r Comorbilidad, echo = F}
+# Comorbilidad:
+ggplot(datos, aes(x = tiempo, y = comorbilidades)) +
+  geom_count(aes(alpha = after_stat(n)), shape = 16, size = 3) +
+  scale_alpha(range = c(0.3, 1)) +
+  theme_bw()
+
+
+```
+
+
+# -------------------------------------------#
+Se modeliza:
+$$
+h_i (t) = h_0(t) \cdot e^{\beta_0 + \beta_1 \cdot x_i .....}
+$$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
