@@ -5,10 +5,10 @@ date: "2025-05-16"
 output:
   pdf_document:
     latex_engine: xelatex
-execute:
-  warning: false
-  message: false
+    includes:
+      in_header: header.tex
 ---
+
 
 
 ```{r CHAT, include = F}
@@ -39,6 +39,14 @@ library(dplyr)
 library(knitr)
 library(kableExtra)
 library(RColorBrewer) # Paletas
+library(survival)  # Manejo datos de supervivencia 
+library(survminer) # Crear gráficos con la función ggsurvplot()
+library(survMisc)  # Para realizar el test de tendencia
+library(ggpubr)    # Manejo de gráficos con ggplot (o ggsurvplot)
+
+# Para que las tablas, etc esté en español
+# tinytex::tlmgr_install("babel-spanish")
+
 
 ```
 
@@ -58,9 +66,12 @@ summary(datos)
 # Para ver cuántos colores tiene la paleta:
 # brewer.pal.info["RdBu", "maxcolors"]
 
+#  brewer.pal.info["PRGn", "maxcolors"]
 
 # Para que los muestre:
 # display.brewer.pal(n = 11, "RdBu")
+# prgn <- brewer.pal(n = 11, name = "PRGn")
+# barplot(rep(1, 11), col = prgn, names.arg = prgn, las = 2)
 
 # Para los nombres de los colores:
 # brewer.pal(n = 11, name = "RdBu")
@@ -69,13 +80,15 @@ summary(datos)
 # colores <- brewer.pal(11, "RdBu")
 # barplot(rep(1, 11), col = colores, names.arg = colores, las = 2)
 
-# Ver de ponerles nombres
+# VER de ponerles nombres
 # colores <- brewer.pal(11, "RdBu")
 # names(colores) <- c("RojoOscuro", "Rojo", "Rosa", "Salmón", "Beige",
 #                     "Gris", "Celeste", "AzulClaro", "Azul", "AzulOscuro", "AzulMuyOscuro")
 
 ```
 
+
+# Introducción 
 _Variables_
 
  - ID: número de identificación del paciente
@@ -99,21 +112,20 @@ _Variables_
 
  - Comorbilidades: número de comorbilidades que presenta el paciente
                    (el 0 indica que no tiene ninguna comorbilidad)
-
-   presencia de dos o más enfermedades o afecciones en una misma
-   persona al mismo tiempo
-
+                   presencia de dos o más enfermedades o afecciones en una misma
+                   persona al mismo tiempo
 
 
-```{r Analisis Descriptivo, echo = F}
+
+# Análisis Descriptivo
+
+```{r Edad, echo = F}
 
 # ------------ Análisis descriptivo ------------
 
  # IDEAS:
  # - Histograma de edad
- # - Diagrama de torta de sexo biológico?
- # - Boxplot de los tiempos para fumadores/ no fumadores?
- # - Boxplot de los tiempos para distintos niveles de actividad física?
+
 
 # Histograma:
 # VER
@@ -160,7 +172,6 @@ Los pacientes que fuman parecen casi en su totalidad presentar tiempos de superv
 #     sd = sd(tiempo)
 #    )
 
-
 # DEJAR ESTA ?
 # Esta me gusta más:
 datos %>% 
@@ -179,7 +190,7 @@ datos %>%
     across(where(is.numeric),
            ~round(.x, 2))) %>%
   kable(
-    caption = "Medidas descriptivas de los pacientes según nivel \\ de actividad física",
+     caption = "\\parbox{.8\\linewidth}{\\centering Medidas descriptivas de los pacientes según nivel \\\\ de actividad física}",
     col.names = c("Actividad", "n", "Media", "Mediana", "Desvío estándar"),
     escape = F) %>%
   kable_styling(latex_options = c("responsive", "hold_position"))
@@ -197,24 +208,86 @@ ggplot(datos, aes(x = tiempo, y = comorbilidades)) +
   theme_bw()
 
 
+
+
+datos %>% 
+  mutate(comorbilidades = factor(comorbilidades)) %>% 
+  group_by(comorbilidades) %>% 
+  summarise(
+    n = n(),
+    media = mean(tiempo),
+    mediana = median(tiempo),
+    sd = sd(tiempo)
+  ) %>%
+  mutate(
+    across(where(is.numeric),
+           ~round(.x, 2))) %>%
+  kable(
+     caption = "\\parbox{.8\\linewidth}{\\centering Medidas descriptivas de los pacientes según \\\\ cantidad de comorbilidades}",
+    col.names = c("Comorbilidades", "n", "Media", "Mediana", "Desvío estándar"),
+    escape = F) %>%
+  kable_styling(latex_options = c("responsive", "hold_position"))
+
+
+# Sólo hay una persona que presentó 7 comorbilidades así que no se puede calcular el desvío 
+
+
+
 ```
 
 
-# -------------------------------------------#
-Se modeliza:
+
+
+```{r Sexo y actividad física, echo = F}
+# Intento de boxplot sexo y actividad física
+datos %>% 
+  mutate(
+    sexo = str_to_title(as.character(sexo)),
+    sexo = factor(sexo,
+                  levels = c("Masculino", "Femenino")),
+        actividad = str_to_title(as.character(actividad)),
+    actividad = factor(actividad,
+         levels = c("Baja", "Moderada", "Alta"))) %>% 
+  group_by(sexo, actividad) %>%
+  ggplot(aes(x = sexo, y = tiempo, fill = actividad))+
+  geom_boxplot()+
+  scale_fill_manual(values = c("#92C5DE", "#C2A5CF","#F4A582"))  +
+  labs(x = "Sexo",
+       y = "Tiempo (en meses)",
+       fill = "Actividad") +
+  theme_bw() 
+```
+
+Puede verse que hay una gran dispersión entre las mujeres que realizan bajo nivel de actividad física en los tiempos de supervivencia, a diferencia de los hombres, que presentan tiempos mucho más concentrados.
+Los pacientes masculinos que participaron del estudio y realizaban bajos niveles de actividad física no sobrevivieron los dos años, mientras que más del 25% de las mujeres que realizaban actividad con ese mismo nivel, sobrevivieron más de dos años de haberse iniciado en este estudio.
+
+
+
+```{r Actividad y fumadores, echo = F}
+# Intento de actividad física y fumadores
+datos %>% 
+  mutate(
+        actividad = str_to_title(as.character(actividad)),
+    actividad = factor(actividad,
+         levels = c("Baja", "Moderada", "Alta"))) %>% 
+  group_by(fumador, actividad) %>%
+  ggplot(aes(x = fumador, y = tiempo, fill = actividad))+
+  geom_boxplot()+
+  scale_fill_manual(values = c("#92C5DE", "#C2A5CF","#F4A582"))  +
+  labs(x = "Fumador/ No fumador",
+       y = "Tiempo (en meses)",
+       fill = "Actividad") +
+  scale_x_discrete(label = c("No Fumador", "Fumador")) +
+  theme_bw() 
+
+```
+No parece verse diferencia entre los distintos niveles de actividad física entre los pacientes que fuman. Así como tampoco parece presentarse diferencias en aquellos que no fuman, es decir, en los pacientes no fumadores, realizar actividad física con mayor o menor frecuencia no parece influir en el tiempo de supervivencia.
+
+# Modelo 
+Se analiza el mejor modelo
 $$
 h_i (t) = h_0(t) \cdot e^{\beta_0 + \beta_1 \cdot x_i .....}
 $$
-
-
-
-
-
-
-
-
-
-
 
 
 
