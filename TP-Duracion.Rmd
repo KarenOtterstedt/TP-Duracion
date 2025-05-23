@@ -47,32 +47,31 @@ library(RColorBrewer) # Paletas
 # Somos el grupo 7 así que nos corresponde el dataset 7:
 
 datos <- read_csv("conjunto_grupo_7.csv")
-View(datos)
 summary(datos)
 ```
 
 ```{r Paleta de colores, include = F}
 # Para ver paletas de colores: (Me gustó la RdBu, pero decime voooos)
-# display.brewer.all()
+ display.brewer.all()
 
 # Para ver cuántos colores tiene la paleta:
-# brewer.pal.info["RdBu", "maxcolors"]
+ brewer.pal.info["RdBu", "maxcolors"]
 
 
 # Para que los muestre:
-# display.brewer.pal(n = 11, "RdBu")
+ display.brewer.pal(n = 11, "RdBu")
 
 # Para los nombres de los colores:
-# brewer.pal(n = 11, name = "RdBu")
+ brewer.pal(n = 11, name = "RdBu")
 
 # Para ver qué color es cuál:
-# colores <- brewer.pal(11, "RdBu")
-# barplot(rep(1, 11), col = colores, names.arg = colores, las = 2)
+ colores <- brewer.pal(11, "RdBu")
+ barplot(rep(1, 11), col = colores, names.arg = colores, las = 2)
 
 # Ver de ponerles nombres
-# colores <- brewer.pal(11, "RdBu")
-# names(colores) <- c("RojoOscuro", "Rojo", "Rosa", "Salmón", "Beige",
-#                     "Gris", "Celeste", "AzulClaro", "Azul", "AzulOscuro", "AzulMuyOscuro")
+ colores <- brewer.pal(11, "RdBu")
+ names(colores) <- c("RojoOscuro", "Rojo", "Rosa", "Salmón", "Beige",
+                     "Gris", "Celeste", "AzulClaro", "Azul", "AzulOscuro", "AzulMuyOscuro")
 
 ```
 
@@ -105,7 +104,7 @@ _Variables_
 
 
 
-```{r Analisis Descriptivo, echo = F}
+```{r Edades, echo = F, fig.cap="Histograma de edades"}
 
 # ------------ Análisis descriptivo ------------
 
@@ -119,10 +118,12 @@ _Variables_
 # VER
 ggplot(datos, aes(x = edad)) +
   geom_histogram(fill = "#92C5DE", color = "white") +
-  theme_bw()
+  theme_bw()+
+  labs(y = "Frecuencia", x = "Edad")
 ```
+En base a el gráfico @ref(fig:Edades) se puede ver que la mayoría de los pacientes en el estudio son mayores a 60 años 
 
-```{r Fumadores, echo  = F}
+```{r Fumadores, echo  = F, fig.cap="Boxplot de fumadores vs no fumadores"}
 # Boxplot fumadores:
 datos %>% 
   group_by(fumador) %>% 
@@ -136,10 +137,10 @@ datos %>%
 
 
 ```
-A pesar de presentar algunos outliers, puede verse que aquellos pacientes que padecieron cierta enfermedad crónica respiratoria y fuman presentaron menores tiempos de supervivencia que sus contrapartes que no fuman. 
+A pesar de presentar algunos outliers, puede verse en el gráfico @ref(fig:Fumadores) que aquellos pacientes que padecieron cierta enfermedad crónica respiratoria y fuman presentaron menores tiempos de supervivencia que sus contrapartes que no fuman. 
 Los pacientes que fuman parecen casi en su totalidad presentar tiempos de supervivencia menores que el 50% de aquellos que no son fumadores activos.
 
-```{r Actividad, echo = F}
+```{r Actividad, echo = F, fig.cap="Medidas descriptivas por nivel de actividad"}
 #BORRAR ???
  # VER si usar o no 
 # datos %>% 
@@ -162,7 +163,7 @@ Los pacientes que fuman parecen casi en su totalidad presentar tiempos de superv
 
 
 # DEJAR ESTA ?
-# Esta me gusta más:
+# Esta me gusta más: todo esto lo hizo el chat no? porque lit no se como se hace
 datos %>% 
   mutate(
     actividad = str_to_title(as.character(actividad)),
@@ -187,7 +188,8 @@ datos %>%
 
 
 ```
-Pocas personas de las que participaron en el estudio, realizan altos niveles de actividad física, sin embargo, no parecería haber una gran diferencia entre los tiempos de las personas que realizan moderadas y bajas cantidades de actividad física.
+
+En base a la tabla @ref(fig:Actividad) pocas personas de las que participaron en el estudio, realizan un nivel de actividad física alto, sin embargo, no hay gran diferencia entre los tiempos medios de las personas que realizan actividad de niveles moderada y baja.
 
 ```{r Comorbilidad, echo = F}
 # Comorbilidad:
@@ -198,6 +200,8 @@ ggplot(datos, aes(x = tiempo, y = comorbilidades)) +
 
 
 ```
+
+En base a el grafico @ref(fig:Comorbilidad) se espera que el tiempo medio de supervivencia para personas con mayor numero de comorbilidades, sea menor que para las persona con menos comorbilidades
 
 
 # -------------------------------------------#
