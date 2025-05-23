@@ -3,20 +3,19 @@ title: "Trabajo Práctico Análisis de Duración"
 author: "Karen Otterstedt Juan Sebastían Reines Urieles"
 date: "2025-05-16"
 output:
-  pdf_document:
+  bookdown::pdf_document2:
     latex_engine: xelatex
     includes:
       in_header: header.tex
 ---
 
-
-
 ```{r CHAT, include = F}
-# holandaaaa se me ocurrió que podemos ir hablando por acá (igual pusé comentarios más abajo jeje)
+# Creo que para ver lo de selección de modelos tenemos que hacer dummies con las variables, de última eso podemos hacer meet o juntarnos y verlo el lunes
+
+# Te voy a pedir porfis si podés ver de arreglar los títulos de las tablas? Porque no sé qué toqué pero los rompí :P :(
 ```
 
-<!-- COMENTARIO EN RMARKDOWN QUE SUPUESTAMENTE NO APARECE:
-LISTA DE COSAS PARA HACER: (esta es la lista que ni puedo hacer, seleccionamos el modelo que queremos, comparamos los distintos niveles, y después qué? Concluimos? IC? Qué mas? jashtag PERDIDA :( 
+<!-- LISTA DE COSAS PARA HACER: (esta es la lista que ni puedo hacer, seleccionamos el modelo que queremos, comparamos los distintos niveles, y después qué? Concluimos? IC? Qué mas? jashtag PERDIDA :( 
     - Análisis descriptivo de los datos
     - Selección de modelos
     - Conclusiones
@@ -31,7 +30,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r Librerias, include = F}
-
+# install.packages("bookdown")
 library(readr)
 library(tibble)
 library(tidyverse)
@@ -50,7 +49,7 @@ library(ggpubr)    # Manejo de gráficos con ggplot (o ggsurvplot)
 
 ```
 
-```{r Cargando los datos, include = F}
+```{r Cargando_datos, include = F}
 # ------------ Cargando los datos  ------------
 # Somos el grupo 7 así que nos corresponde el dataset 7:
 
@@ -58,7 +57,7 @@ datos <- read_csv("conjunto_grupo_7.csv")
 summary(datos)
 ```
 
-```{r Paleta de colores, include = F}
+```{r Paletas_colores, include = F}
 # Para ver paletas de colores: (Me gustó la RdBu, pero decime voooos)
  display.brewer.all()
 
@@ -123,7 +122,7 @@ _Variables_
 
 # Análisis Descriptivo
 
-```{r Edad, echo = F, fig.cap = "Histograma de edades"}
+```{r Edades, echo = F, fig.cap = "Histograma de edades", cache = T}
 
 
 # ------------ Análisis descriptivo ------------
@@ -141,7 +140,8 @@ ggplot(datos, aes(x = edad)) +
 ```
 En base a el gráfico @ref(fig:Edades) se puede ver que la mayoría de los pacientes en el estudio son mayores a 60 años 
 
-```{r Fumadores, echo  = F, fig.cap="Boxplot de fumadores vs no fumadores"}
+```{r Fumadores, echo  = F, fig.cap="Boxplot de fumadores vs no fumadores", cache = T}
+
 # Boxplot fumadores:
 datos %>% 
   group_by(fumador) %>% 
@@ -153,13 +153,15 @@ datos %>%
   theme_bw() +
   theme(legend.position = "none") 
 
-
 ```
 A pesar de presentar algunos outliers, puede verse en el gráfico @ref(fig:Fumadores) que aquellos pacientes que padecieron cierta enfermedad crónica respiratoria y fuman presentaron menores tiempos de supervivencia que sus contrapartes que no fuman. 
 Los pacientes que fuman parecen casi en su totalidad presentar tiempos de supervivencia menores que el 50% de aquellos que no son fumadores activos.
 
-```{r Actividad, echo = F, fig.cap="Medidas descriptivas por nivel de actividad"}
-#BORRAR ???
+
+```{r Actividad, echo = FALSE, fig.cap = "Medidas descriptivas de actividad", cache = TRUE}
+
+
+# BORRAR ???
  # VER si usar o no 
 # datos %>% 
 #   group_by(actividad) %>% 
@@ -181,9 +183,12 @@ Los pacientes que fuman parecen casi en su totalidad presentar tiempos de superv
 
 # DEJAR ESTA ?
 # Esta me gusta más: todo esto lo hizo el chat no? porque lit no se como se hace
+# Jeje masooo, tipo fui copiando cosas que tenía de los tp, y había cosas que le quería cambiar así que eso si le fui preguntando
 datos %>% 
+  # str_to_title: Para que use los niveles de actividad con mayúscula la primera letra
+  # factor(...., levels): para que las ordene
   mutate(
-    actividad = str_to_title(as.character(actividad)),
+    actividad = str_to_title(as.character(actividad)), 
         actividad = factor(actividad,
                        levels = c("Alta", "Moderada", "Baja"))) %>% 
   group_by(actividad) %>% 
@@ -194,30 +199,33 @@ datos %>%
     sd = sd(tiempo)
   ) %>%
   mutate(
-    across(where(is.numeric),
+    across(where(is.numeric), # Para que sólo use 2 decimales
            ~round(.x, 2))) %>%
   kable(
-     caption = "\\parbox{.8\\linewidth}{\\centering Medidas descriptivas de los pacientes según nivel \\\\ de actividad física}",
+     caption = "\\parbox{.8\\linewidth}{Medidas descriptivas de los pacientes según nivel de actividad física}", # Para que baje el título 
+     # Cortaba una palabra antes
+     # NO ME CONVENCE COMO QUEDA VER
     col.names = c("Actividad", "n", "Media", "Mediana", "Desvío estándar"),
-    escape = F) %>%
+    escape = F) %>% # No me acuerdo qué hace el escape, pero creo que era para la caption
   kable_styling(latex_options = c("responsive", "hold_position"))
-
-
+# responsive para que si usamos htlm se ajuste bien creo
+# hold position para que no pase a otra hoja creo
 
 ```
 
 En base a la tabla @ref(fig:Actividad) pocas personas de las que participaron en el estudio, realizan un nivel de actividad física alto, sin embargo, no hay gran diferencia entre los tiempos medios de las personas que realizan actividad de niveles moderada y baja.
 
-```{r Comorbilidad, echo = F}
+```{r Comorbilidad, echo = F, cache = T}
 # Comorbilidad:
 ggplot(datos, aes(x = tiempo, y = comorbilidades)) +
   geom_count(aes(alpha = after_stat(n)), shape = 16, size = 3) +
   scale_alpha(range = c(0.3, 1)) +
   theme_bw()
+```
+En base a @ref(fig:Comorbilidad) se espera que el tiempo medio de supervivencia para personas con mayor numero de comorbilidades, sea menor que para las persona con menos comorbilidades
+<!-- No sé si me convence porque siento que hay pocas personas que tuvieron muchas comorbilidades, ponele que tuvieron 7 fue una, pero que tuvieron 6 comorbilidades fueron 3 y siento que podrían tener comportamiento parecido a las personas que tuvieron menos porque es como que hay dos en los primeros tiempos y uno que está más avanzado el estudio, pero siento que si hubiera más observaciones con esa cantidad de comorbilidades capaz serían parecidos a los otros  -->
 
-
-
-
+```{r Tabla_Comorbilidad, echo = F, cache = T}
 datos %>% 
   mutate(comorbilidades = factor(comorbilidades)) %>% 
   group_by(comorbilidades) %>% 
@@ -231,7 +239,7 @@ datos %>%
     across(where(is.numeric),
            ~round(.x, 2))) %>%
   kable(
-     caption = "\\parbox{.8\\linewidth}{\\centering Medidas descriptivas de los pacientes según \\\\ cantidad de comorbilidades}",
+    caption = "Medidas descriptivas de los pacientes según cantidad de comorbilidades",
     col.names = c("Comorbilidades", "n", "Media", "Mediana", "Desvío estándar"),
     escape = F) %>%
   kable_styling(latex_options = c("responsive", "hold_position"))
@@ -239,16 +247,14 @@ datos %>%
 
 # Sólo hay una persona que presentó 7 comorbilidades así que no se puede calcular el desvío 
 
-
-
 ```
+<!-- VER, no me convence -->
+Mucha gente presentó 2, 3 o 4 comorbilidades, y, esos grupos de personas tuvieron tiempos registrados similares.
+Sólo 3 personas no tuvieron comorbilidades.
 
-En base a el grafico @ref(fig:Comorbilidad) se espera que el tiempo medio de supervivencia para personas con mayor numero de comorbilidades, sea menor que para las persona con menos comorbilidades
 
 
-
-
-```{r Sexo y actividad física, echo = F}
+```{r Sexo_actividad física, echo = F, cache = T}
 # Intento de boxplot sexo y actividad física
 datos %>% 
   mutate(
@@ -273,7 +279,7 @@ Los pacientes masculinos que participaron del estudio y realizaban bajos niveles
 
 
 
-```{r Actividad y fumadores, echo = F}
+```{r Actividad_fumadores, echo = F, cache = T}
 # Intento de actividad física y fumadores
 datos %>% 
   mutate(
@@ -298,6 +304,31 @@ Se analiza el mejor modelo
 $$
 h_i (t) = h_0(t) \cdot e^{\beta_0 + \beta_1 \cdot x_i .....}
 $$
+
+
+
+
+
+
+
+
+
+
+
+
+\newpage
+# Anexo
+## Selección de modelos:
+Empezamos con el modelo más simple:
+- Modelo nulo o basal:
+$$
+h_i(t) = h_0 (t)
+$$
+
+\newpage
+### Tests
+
+
 
 
 
