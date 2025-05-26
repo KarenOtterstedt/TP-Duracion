@@ -1,13 +1,28 @@
 ---
 title: "Trabajo Práctico Análisis de Duración"
-author: "Karen Otterstedt Juan Sebastían Reines Urieles"
+author: "Karen Otterstedt Juan Sebastián Reines Urieles"
 date: "2025-05-16"
 output:
   bookdown::pdf_document2:
+    smooth_scroll: true
     latex_engine: xelatex
+    pandoc_args:
+      - "--variable"
+      - "lang=es"
     includes:
-      in_header: header.tex
+      in_header: header_dur.tex
+    toc: false
+    number_sections: false
 ---
+
+
+<!-- CREAR UN ARCHIVO LLAMADO header.tex (CON BLOC DE NOTAS)  QUE TENGA: -->
+
+<!-- \renewcommand{\figurename}{Figura} -->
+<!-- \usepackage{caption} -->
+<!-- \captionsetup[figure]{labelformat=default, labelsep=colon, name=Figura} -->
+
+<!--  ES PARA QUE USE COSAS EN ESPAÑOL COMO FIGURA EN VEZ DE FIGURE Y ESO, Y PARA QUE CUANDO REFERENCIEMOS ALGO VAYA AL GRÁFICO Y NO A LA CAPTION --> 
 
 ```{r CHAT, include = F}
 # Creo que para ver lo de selección de modelos tenemos que hacer dummies con las variables, de última eso podemos hacer meet o juntarnos y verlo el lunes
@@ -15,17 +30,19 @@ output:
 # Te voy a pedir porfis si podés ver de arreglar los títulos de las tablas? Porque no sé qué toqué pero los rompí :P :(
 ```
 
-<!-- LISTA DE COSAS PARA HACER: (esta es la lista que ni puedo hacer, seleccionamos el modelo que queremos, comparamos los distintos niveles, y después qué? Concluimos? IC? Qué mas? jashtag PERDIDA :( 
-    - Análisis descriptivo de los datos
+
+<!-- LISTA DE COSAS PARA HACER:
+seleccionamos el modelo que queremos, comparamos los distintos niveles, y después qué? Concluimos? IC? Qué mas? jashtag PERDIDA :( 
+    - Análisis descriptivo de los datos <---- Ponele que está
     - Selección de modelos
     - Conclusiones
     -->
-
-
-```{r Seteando_opciones, include=FALSE}
+    
+```{r Seteando_opciones, include = F}
 knitr::opts_chunk$set(
   warning = FALSE,
-  message = FALSE
+  message = FALSE, 
+  echo = F
 )
 ```
 
@@ -50,19 +67,19 @@ library(ggpubr)    # Manejo de gráficos con ggplot (o ggsurvplot)
 ```
 
 ```{r Cargando_datos, include = F}
-# ------------ Cargando los datos  ------------
 # Somos el grupo 7 así que nos corresponde el dataset 7:
 
 datos <- read_csv("conjunto_grupo_7.csv")
 summary(datos)
+view(datos)
 ```
 
 ```{r Paletas_colores, include = F}
 # Para ver paletas de colores: (Me gustó la RdBu, pero decime voooos)
- display.brewer.all()
+# display.brewer.all()
 
 # Para ver cuántos colores tiene la paleta:
- brewer.pal.info["RdBu", "maxcolors"]
+# brewer.pal.info["RdBu", "maxcolors"]
 
 #  brewer.pal.info["PRGn", "maxcolors"]
 
@@ -74,11 +91,11 @@ summary(datos)
 
 
 # Para los nombres de los colores:
- brewer.pal(n = 11, name = "RdBu")
+# brewer.pal(n = 11, name = "RdBu")
 
 # Para ver qué color es cuál:
- colores <- brewer.pal(11, "RdBu")
- barplot(rep(1, 11), col = colores, names.arg = colores, las = 2)
+ # colores <- brewer.pal(11, "RdBu")
+ # barplot(rep(1, 11), col = colores, names.arg = colores, las = 2)
 
 
 # VER de ponerles nombres
@@ -89,40 +106,38 @@ summary(datos)
 
 ```
 
+# Introducción
 
-# Introducción 
-_Variables_
+*Variables*
 
- - ID: número de identificación del paciente
+-   ID: número de identificación del paciente
 
- - Tiempo: tiempo en meses desde el diagnóstico de la
-           enfermedad crónica respiratoria hasta que presenta
-           la complicación severa o termina su período de seguimiento
+-   Tiempo: tiempo en meses desde el diagnóstico de la enfermedad
+    crónica respiratoria hasta que presenta la complicación severa o
+    termina su período de seguimiento
 
- - Complicacion:  indicadora  de  la  presencia  de  complicación
-                  severa  (1:  Presente,  0: Censura)
-                                                                             
- - Edad: edad del paciente al momento de iniciar su seguimiento
-          (en años)
+-   Complicacion: indicadora de la presencia de complicación severa (1:
+    Presente, 0: Censura)
 
- - Sexo: sexo biológico del paciente
+-   Edad: edad del paciente al momento de iniciar su seguimiento (en
+    años)
 
- - Fumador: indicadora de si el paciente es fumador activo o no
+-   Sexo: sexo biológico del paciente
 
- - Actividad:  nivel  de  actividad  física  del  paciente  categorizado
-               en  actividad  baja, moderada o alta
+-   Fumador: indicadora de si el paciente es fumador activo o no
 
- - Comorbilidades: número de comorbilidades que presenta el paciente
-                   (el 0 indica que no tiene ninguna comorbilidad)
-                   presencia de dos o más enfermedades o afecciones en una misma
-                   persona al mismo tiempo
+-   Actividad: nivel de actividad física del paciente categorizado en
+    actividad baja, moderada o alta
 
+-   Comorbilidades: número de comorbilidades que presenta el paciente
+    (el 0 indica que no tiene ninguna comorbilidad) presencia de dos o
+    más enfermedades o afecciones en una misma persona al mismo tiempo
 
-
+\newpage
 
 # Análisis Descriptivo
 
-```{r Edades, echo = F, fig.cap = "Histograma de edades", cache = T}
+```{r Edades, echo = F, fig.width = 6, fig.height = 4, fig.align = 'center', fig.cap = 'Histograma de edades', cache = T}
 
 
 # ------------ Análisis descriptivo ------------
@@ -138,9 +153,10 @@ ggplot(datos, aes(x = edad)) +
   theme_bw()+
   labs(y = "Frecuencia", x = "Edad")
 ```
-En base a el gráfico @ref(fig:Edades) se puede ver que la mayoría de los pacientes en el estudio son mayores a 60 años 
 
-```{r Fumadores, echo  = F, fig.cap="Boxplot de fumadores vs no fumadores", cache = T}
+En base la figura \@ref(fig:Edades) se puede ver que la mayoría de los pacientes en el estudio son mayores a 60 años
+
+```{r fumadores, echo  = F,fig.width=6, fig.height=4, fig.align='center', fig.cap='Boxplot de fumadores vs no fumadores', cache = T}
 
 # Boxplot fumadores:
 datos %>% 
@@ -154,11 +170,15 @@ datos %>%
   theme(legend.position = "none") 
 
 ```
-A pesar de presentar algunos outliers, puede verse en el gráfico @ref(fig:Fumadores) que aquellos pacientes que padecieron cierta enfermedad crónica respiratoria y fuman presentaron menores tiempos de supervivencia que sus contrapartes que no fuman. 
-Los pacientes que fuman parecen casi en su totalidad presentar tiempos de supervivencia menores que el 50% de aquellos que no son fumadores activos.
 
+A pesar de presentar algunos outliers, puede verse en el gráfico
+\@ref(fig:fumadores) que aquellos pacientes que padecieron cierta
+enfermedad crónica respiratoria y fuman presentaron menores tiempos de
+supervivencia que sus contrapartes que no fuman. Los pacientes que fuman
+parecen casi en su totalidad presentar tiempos de supervivencia menores
+que el 50% de aquellos que no son fumadores activos.
 
-```{r Actividad, echo = FALSE, fig.cap = "Medidas descriptivas de actividad", cache = TRUE}
+```{r actividad, echo = FALSE, fig.width=6, fig.height=4, fig.align='center', fig.cap = 'Medidas descriptivas de actividad', cache = TRUE}
 
 
 # BORRAR ???
@@ -202,30 +222,38 @@ datos %>%
     across(where(is.numeric), # Para que sólo use 2 decimales
            ~round(.x, 2))) %>%
   kable(
-     caption = "\\parbox{.8\\linewidth}{Medidas descriptivas de los pacientes según nivel de actividad física}", # Para que baje el título 
-     # Cortaba una palabra antes
-     # NO ME CONVENCE COMO QUEDA VER
+    caption = "\\parbox{.9\\linewidth}{\\centering Medidas descriptivas de los pacientes de acuerdo a su nivel de actividad física}",
     col.names = c("Actividad", "n", "Media", "Mediana", "Desvío estándar"),
-    escape = F) %>% # No me acuerdo qué hace el escape, pero creo que era para la caption
+    escape = F,
+    label = "Tabla 1") %>%
   kable_styling(latex_options = c("responsive", "hold_position"))
 # responsive para que si usamos htlm se ajuste bien creo
 # hold position para que no pase a otra hoja creo
 
 ```
 
-En base a la tabla @ref(fig:Actividad) pocas personas de las que participaron en el estudio, realizan un nivel de actividad física alto, sin embargo, no hay gran diferencia entre los tiempos medios de las personas que realizan actividad de niveles moderada y baja.
 
-```{r Comorbilidad, echo = F, cache = T}
+En base a la \@ref(tab:actividad) pocas personas de las que participaron en el
+estudio, realizan un nivel de actividad física alto, sin embargo, no hay
+gran diferencia entre los tiempos medios de las personas que realizan
+actividad de niveles moderada y baja.
+
+```{r comorbilidad,fig.width=6, fig.height=4, fig.align='center', echo = F, cache = T}
 # Comorbilidad:
 ggplot(datos, aes(x = tiempo, y = comorbilidades)) +
   geom_count(aes(alpha = after_stat(n)), shape = 16, size = 3) +
   scale_alpha(range = c(0.3, 1)) +
   theme_bw()
 ```
-En base a @ref(fig:Comorbilidad) se espera que el tiempo medio de supervivencia para personas con mayor numero de comorbilidades, sea menor que para las persona con menos comorbilidades
+
+En base a \@ref(fig:comorbilidad) se espera que el tiempo medio de
+supervivencia para personas con mayor numero de comorbilidades, sea
+menor que para las persona con menos comorbilidades
 <!-- No sé si me convence porque siento que hay pocas personas que tuvieron muchas comorbilidades, ponele que tuvieron 7 fue una, pero que tuvieron 6 comorbilidades fueron 3 y siento que podrían tener comportamiento parecido a las personas que tuvieron menos porque es como que hay dos en los primeros tiempos y uno que está más avanzado el estudio, pero siento que si hubiera más observaciones con esa cantidad de comorbilidades capaz serían parecidos a los otros  -->
 
-```{r Tabla_Comorbilidad, echo = F, cache = T}
+```{r tablacomorbilidad, echo = F, cache = T}
+
+
 datos %>% 
   mutate(comorbilidades = factor(comorbilidades)) %>% 
   group_by(comorbilidades) %>% 
@@ -238,23 +266,23 @@ datos %>%
   mutate(
     across(where(is.numeric),
            ~round(.x, 2))) %>%
-  kable(
-    caption = "Medidas descriptivas de los pacientes según cantidad de comorbilidades",
-    col.names = c("Comorbilidades", "n", "Media", "Mediana", "Desvío estándar"),
-    escape = F) %>%
+kable(
+  caption = "\\parbox{.9\\linewidth}{\\centering Medidas descriptivas de los pacientes de acuerdo a la cantidad de comorbilidades que presentaron}",
+  col.names = c("Comorbilidades", "n", "Media", "Mediana", "Desvío estándar"),
+  escape = FALSE
+) %>% 
   kable_styling(latex_options = c("responsive", "hold_position"))
 
 
 # Sólo hay una persona que presentó 7 comorbilidades así que no se puede calcular el desvío 
 
 ```
+
 <!-- VER, no me convence -->
-Mucha gente presentó 2, 3 o 4 comorbilidades, y, esos grupos de personas tuvieron tiempos registrados similares.
-Sólo 3 personas no tuvieron comorbilidades.
+En \@ref(tab:tablacomorbilidad) puede verse que mucha gente presentó 2, 3 o 4 comorbilidades, y, esos grupos de personas tuvieron tiempos registrados similares. Sólo 3 personas no tuvieron comorbilidades.
 
+```{r sexoactividad,fig.width=6, fig.height=4, fig.align='center', fig.cap="Actividad de acuerdo al sexo", echo = F, cache = T}
 
-
-```{r Sexo_actividad física, echo = F, cache = T}
 # Intento de boxplot sexo y actividad física
 datos %>% 
   mutate(
@@ -274,12 +302,13 @@ datos %>%
   theme_bw() 
 ```
 
-Puede verse que hay una gran dispersión entre las mujeres que realizan bajo nivel de actividad física en los tiempos de supervivencia, a diferencia de los hombres, que presentan tiempos mucho más concentrados.
+En \@ref(fig:sexoactividad) puede verse que hay una gran dispersión entre las mujeres que realizan
+bajo nivel de actividad física en los tiempos de supervivencia, a
+diferencia de los hombres, que presentan tiempos mucho más concentrados.
 Los pacientes masculinos que participaron del estudio y realizaban bajos niveles de actividad física no sobrevivieron los dos años, mientras que más del 25% de las mujeres que realizaban actividad con ese mismo nivel, sobrevivieron más de dos años de haberse iniciado en este estudio.
 
+```{r actividadfumadores, echo = F,fig.width=6, fig.height=4, fig.align='center', fig.cap = 'Actividad de acuerdo a si son fumadores', cache = T}
 
-
-```{r Actividad_fumadores, echo = F, cache = T}
 # Intento de actividad física y fumadores
 datos %>% 
   mutate(
@@ -290,43 +319,305 @@ datos %>%
   ggplot(aes(x = fumador, y = tiempo, fill = actividad))+
   geom_boxplot()+
   scale_fill_manual(values = c("#92C5DE", "#C2A5CF","#F4A582"))  +
-  labs(x = "Fumador/ No fumador",
+  labs(x = "",
        y = "Tiempo (en meses)",
        fill = "Actividad") +
   scale_x_discrete(label = c("No Fumador", "Fumador")) +
   theme_bw() 
 
 ```
-No parece verse diferencia entre los distintos niveles de actividad física entre los pacientes que fuman. Así como tampoco parece presentarse diferencias en aquellos que no fuman, es decir, en los pacientes no fumadores, realizar actividad física con mayor o menor frecuencia no parece influir en el tiempo de supervivencia.
 
-# Modelo 
-Se analiza el mejor modelo
+En \@ref(fig:actividadfumadores) no parece verse diferencia entre los distintos niveles de actividad física entre los pacientes que fuman. Así como tampoco parece presentarse diferencias en aquellos que no fuman, es decir, en los pacientes no fumadores, realizar actividad física con mayor o menor frecuencia no parece influir en el tiempo de supervivencia.
+
+
+
+
+
+
+# Modelo
+
+Se analiza el mejor modelo 
 $$
 h_i (t) = h_0(t) \cdot e^{\beta_0 + \beta_1 \cdot x_i .....}
 $$
 
-
-
-
-
-
-
-
-
-
-
-
 \newpage
+
 # Anexo
+
 ## Selección de modelos:
-Empezamos con el modelo más simple:
+
+
+
+
+### Modelos de una variable
+
+Empezamos con el modelo más simple: 
 - Modelo nulo o basal:
+(- edad = 0? Creo que habría que categorizar 
+- hombre
+- no fumador
+- actividad baja 
+- ninguna comorbilidad) 
+
 $$
-h_i(t) = h_0 (t)
+h_i(t) = h_0 (t) \quad i = \overline{1,110}
 $$
 
+```{r Modelo0, include = F}
+# Modelo para graficar
+mod_0 <- survfit(Surv(tiempo, complicacion) ~ 1,
+                 data = datos)
+summary(mod_0)
+
+
+# VER si no debería hacer así: !!!! (usa el modelo de cox)
+# mod_0 <- coxph(Surv(tiempo, complicacion) ~ 1,
+#                ties = "breslow", data = datos)
+# 
+# # Crear curva de supervivencia a partir del modelo
+# km_mod_0 <- survfit(mod_0)
+# 
+# # Ahora sí graficar
+# ggsurvplot(fit = km_mod_0, data = datos,
+#            title = "Función de supervivencia estimada (K-M)",
+#            censor.shape = 20,
+#            xlab = "Meses",
+#            ylab = "Probabilidad de Supervivencia estimada",
+#            legend = "none",
+#            legend.title = "")
+
+```
+
+
+```{r Supervivencia, echo = F}
+
+ggsurvplot(fit = mod_0, data = datos,
+           title = "Función de supervivencia estimada (K-M)",
+           censor.shape = 20,
+           xlab = "Meses",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend = "none",
+           legend.title = "")
+
+```
+
+
+
+
+-   Modelo 1: sólo con edad (porque complicación es el de
+    censura/evento) <!-- VER SI HAY QUE CATEGORIZAR EDAD --> 
+$$
+    h_i(t) = h_0 (t) \cdot e^{\beta_0 \cdot x_i} \quad i = \overline{1,110}
+$$
+<!-- CATEGORIZAR EDADES -->
+```{r Modelo1, include = F}
+# Modelo para graficar
+mod_1 <- survfit(Surv(tiempo, complicacion) ~ edad,
+                 data = datos)
+summary(mod_1)
+```
+
+
+```{r Supervivencia_M1, echo = F}
+
+ggsurvplot(fit = mod_1, data = datos,
+           title = "Función de supervivencia estimada (K-M)",
+           censor.shape = 20,
+           xlab = "Meses",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend = "none",
+           legend.title = "")
+
+```
+
+
+
+-   Modelo 2: sólo con Sexo ($s_i$ = 0 hombre, $s_i$ = 1 mujer)
+
+$$
+h_i(t) = h_0 (t) \cdot e^{\beta_1 \cdot s_i} \quad i = \overline{1,110}
+$$
+
+```{r Modelo2, include = F}
+# Modelo para graficar
+mod_2 <- survfit(Surv(tiempo, complicacion) ~ sexo,
+                 data = datos)
+summary(mod_2)
+```
+
+
+```{r Supervivencia_M2, echo = F}
+
+ggsurvplot(fit = mod_2, data = datos,
+           title = "Función de supervivencia estimada (K-M)",
+           censor.shape = 20,
+           xlab = "Meses",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend.labs = c("Femenino", "Masculino"),
+           legend.title = "")
+
+```
+
+Las mujeres parecen sobrevivir más en los primeros 4 años aprox, pero, parecería que más hombres sobreviven luego de ese tiempo.
+
+
+-   Modelo 3: sólo con Fumador ($f_i$ = 0 No fumador, $f_i$ = 1 Fumador)
+
+$$
+h_i(t) = h_0 (t) \cdot e^{\beta_2 \cdot f_i} \quad i = \overline{1,110}
+$$
+
+
+```{r Modelo3, include = F}
+# Modelo para graficar
+mod_3 <- survfit(Surv(tiempo, complicacion) ~ fumador,
+                 data = datos)
+summary(mod_3)
+```
+
+
+```{r Supervivencia_M3, echo = F}
+
+ggsurvplot(fit = mod_3, data = datos,
+           title = "Función de supervivencia estimada (K-M)",
+           censor.shape = 20,
+           xlab = "Meses",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend.labs = c("No Fumador", "Fumador"),
+           legend.title = "")
+
+```
+Los pacientes que no son fumadores muestran tiempos de supervivencia más altos que aquellos que sí fuman activamente.
+
+
+-   Modelo 4: sólo con Actividad ($a_1$ $a_2$) ( 0 0) Actividad Baja ( 1
+    0)  Actividad Moderada ( 0 1) Actividad Alta
+
+<!-- VER DE PONER ESA CATEGORIZACION EN UNA TABLA -->
+
+$$
+h_i(t) = h_0 (t) \cdot e^{\beta_3 \cdot a_{1i} +
+                          \beta_4 \cdot a_{2i}} \quad i = \overline{1,110}
+$$
+
+```{r Modelo4, include = F}
+# Modelo para graficar
+mod_4 <- survfit(Surv(tiempo, complicacion) ~ actividad,
+                 data = datos)
+summary(mod_4)
+```
+
+
+```{r Supervivencia_M4, echo = F}
+# ORDENAR ALTA MODERADA BAJA O BAJA MODERADA ALTA
+ggsurvplot(fit = mod_4, data = datos,
+           title = "Función de supervivencia estimada (K-M)",
+           censor.shape = 20,
+           xlab = "Meses",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend.labs = c("Alta", "Baja", "Moderada"),
+           legend.title = "")
+
+```
+No parece haber grandes diferencias en los tiempos de supervivencia de los pacientes que participaron del estudio que realizaban distintos niveles de actividad física.
+
+
+-   Modelo 5: sólo con Comorbilidad
+    <!-- VER SI CATEGORIZAR O USAR LOS DISTINTOS VALORES -->
+
+$$
+h_i(t) = h_0 (t) \cdot e^{\beta_5 \cdot c_i} \quad i = \overline{1,110}
+$$
+
+
+```{r Modelo5, include = F}
+# Modelo para graficar
+mod_5 <- survfit(Surv(tiempo, complicacion) ~ comorbilidades,
+                 data = datos)
+summary(mod_5)
+```
+
+
+```{r Supervivencia_M5, echo = F}
+
+ggsurvplot(fit = mod_5, data = datos,
+           title = "Función de supervivencia estimada (K-M)",
+           censor.shape = 20,
+           xlab = "Meses",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend.labs = c("0","1", "2", "3", "4", "5", "6", "7"),
+           legend.title = "Comorbilidades")
+
+# NO TIENE TANTO SENTIDO PONERLO PORQUE HAY 3 QUE NO TUVIERON, UNA PERSONA QUE TUVO 7, ETC (no todas las cantidades de comorbilidades tienen números de observaciones útiles)
+
+```
+
+
+### Modelos de dos variables sin interacción
+
+-   Modelo 6: Edad y Sexo 
+$$
+    h_i(t) = h_0(t) \cdot e^{\beta_0 \cdot x_i + \beta_1 \cdot s_i}
+$$
+
+-   Modelo 7: Edad y Fumador 
+$$
+    h_i(t) = h_0(t) \cdot e^{\beta_0 \cdot x_i + \beta_2 \cdot f_i}
+$$
+
+-   Modelo 8: Edad y Actividad
+$$
+    h_i(t) = h_0(t) \cdot e^{\beta_0 \cdot x_i + 
+                           \beta_3 \cdot a_{1i} +
+                           \beta_4 \cdot a_{2i}}
+$$
+
+-   Modelo 9: Edad y Comorbilidad 
+$$
+    h_i(t) = h_0(t) \cdot e^{\beta_0 \cdot x_i + \beta_5 \cdot c_i}
+$$
+
+-   Modelo 10: Sexo y Fumador 
+$$
+    h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot s_i + \beta_2 \cdot f_i}
+$$
+
+-   Modelo 11: Sexo y Actividad 
+$$
+    h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot s_i + 
+                           \beta_3 \cdot a_{1i} +
+                           \beta_4 \cdot a_{2i}}
+$$
+
+-   Modelo 12: Sexo y Comorbilidad
+$$
+    h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot s_i + 
+                           \beta_3 \cdot a_{1i} +
+                           \beta_4 \cdot a_{2i}}
+$$
+
+-   Modelo 12: Sexo y Comorbilidad 
+$$
+    h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot s_i + 
+                           \beta_3 \cdot a_{1i} +
+                           \beta_4 \cdot a_{2i}}
+$$
+
+
+
+<!-- COMPLETAR LOS MODELOS QUE FALTAN PERO PRIMERO QUERÍA VER SI AGREGAR TODAS LAS VARIABLES O NO -->
 \newpage
+
 ### Tests
+
+_Test de Razón de Verosimilitud_
+
+
+
+
+
+
 
 
 
