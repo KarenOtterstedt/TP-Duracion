@@ -16,28 +16,40 @@ output:
 ---
 
 
-<!-- CREAR UN ARCHIVO LLAMADO header.tex (CON BLOC DE NOTAS)  QUE TENGA: -->
-
-<!-- \renewcommand{\figurename}{Figura} -->
-<!-- \usepackage{caption} -->
-<!-- \captionsetup[figure]{labelformat=default, labelsep=colon, name=Figura} -->
-
-<!--  ES PARA QUE USE COSAS EN ESPAÑOL COMO FIGURA EN VEZ DE FIGURE Y ESO, Y PARA QUE CUANDO REFERENCIEMOS ALGO VAYA AL GRÁFICO Y NO A LA CAPTION 
-
-
-Lo de crear el header.tex no lo entendi, hay que crearlo cada uno en una direccion especifica?--> 
 
 ```{r CHAT, include = F}
-# Creo que para ver lo de selección de modelos tenemos que hacer dummies con las variables, de última eso podemos hacer meet o juntarnos y verlo el lunes
-
 # Te voy a pedir porfis si podés ver de arreglar los títulos de las tablas? Porque no sé qué toqué pero los rompí :P :(
+
+# TO DO: (alt + 127)
+# ⌂ Introducción
+# ⌂ Que se referencie Figura 1, etc (en vez de sólo el 1)
+# ⌂ Referenciar tablas
+# ⌂ Centrar captions (de tablas y figuras)
+# ⌂ Hacer que los gráficos sean un toque más chicos y que no se muevan
+# ⌂ Mejorar captions
+# ⌂ CATEGORIZAR COMORBILIDAD (0-2, 3-4, >=5)
+# ⌂
+
+
+
+# PARA VER DE CATEGORIZAR COMORBILIDADES:
+# Otro Estudio solo el 6% de los pacientes con enfermedad pulmonar obstructiva crónica no tenía otra afección médica crónica, con un promedio de 3.7 comorbilidades en pacientes con EPOC frente a 1.8 en controles sanos.
+# 
+# Otro estudio informó que más del 50% de una cohorte de 1522 pacientes con EPOC tenían 1 o 2 comorbilidades, el 15.8% tenía 3 o 4 comorbilidades y el 6.8% tenía 5 o más.
+# FUENTE: https://scielo.isciii.es/scielo.php?script=sci_arttext&pid=S2529-850X2020001000010#B16
+
+# Siento que dice cosas muy variadas VER QUE USAR
 ```
 
 
 <!-- LISTA DE COSAS PARA HACER:
-seleccionamos el modelo que queremos, comparamos los distintos niveles, y después qué? Concluimos? IC? Qué mas? jashtag PERDIDA :( 
-    - Análisis descriptivo de los datos <---- Ponele que está
-    - Selección de modelos
+seleccionamos el modelo que queremos, comparamos los distintos niveles, y después qué? Concluimos? IC? Qué mas? jashtag PERDIDA :(
+
+    - CATEGORIZAR COMORBILIDADES
+    - VER SI CATEGORIZAR EDAD
+    
+    - Selección de modelos (test de razón de verosimilitud)
+    - Razones de hazard (con IC, etc)
     - Conclusiones
     -->
     
@@ -45,7 +57,9 @@ seleccionamos el modelo que queremos, comparamos los distintos niveles, y despu�
 knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE, 
-  echo = F
+  echo = F,
+  fig.pos = 'H',
+  fig.align = "center"
 )
 ```
 
@@ -64,7 +78,7 @@ library(survMisc)  # Para realizar el test de tendencia
 library(ggpubr)    # Manejo de gráficos con ggplot (o ggsurvplot)
 
 # Para que las tablas, etc esté en español
-tinytex::tlmgr_install("babel-spanish")
+# tinytex::tlmgr_install("babel-spanish")
 
 
 ```
@@ -140,26 +154,18 @@ view(datos)
 
 # Análisis Descriptivo
 
-```{r Edades, echo = F, fig.width = 6, fig.height = 4, fig.align = 'center', fig.cap = 'Histograma de edades', cache = T}
-
-
-# ------------ Análisis descriptivo ------------
-
- # IDEAS:
- # - Histograma de edad
-
+```{r Edades, echo = F, fig.cap = 'Histograma de las edades de los pacientes al iniciar su seguimiento',out.width='90%', cache = T}
 
 # Histograma:
-# VER
 ggplot(datos, aes(x = edad)) +
-  geom_histogram(fill = "#92C5DE", color = "white") +
+  geom_histogram(fill = "#92C5DE", color = "black") +
   theme_bw()+
   labs(y = "Frecuencia", x = "Edad")
 ```
 
-En base la figura \@ref(fig:Edades) se puede ver que la mayoría de los pacientes en el estudio son mayores a 60 años
+En base la figura \@ref(fig:Edades) se puede ver que la mayoría de los pacientes en el estudio son mayores a 60 años.
 
-```{r fumadores, echo  = F,fig.width=6, fig.height=4, fig.align='center', fig.cap='Boxplot de fumadores vs no fumadores', cache = T}
+```{r fumadores, echo  = F, fig.cap='No Fumadores vs Fumadores',out.width='90%', cache = T}
 
 # Boxplot fumadores:
 datos %>% 
@@ -181,32 +187,8 @@ supervivencia que sus contrapartes que no fuman. Los pacientes que fuman
 parecen casi en su totalidad presentar tiempos de supervivencia menores
 que el 50% de aquellos que no son fumadores activos.
 
-```{r actividad, echo = FALSE, fig.width=6, fig.height=4, fig.align='center', fig.cap = 'Medidas descriptivas de actividad', cache = TRUE}
+```{r tab-actividad, echo = FALSE, fig.cap = 'Nivel de actividad física de los pacientes', cache = TRUE}
 
-
-# BORRAR ???
- # VER si usar o no 
-# datos %>% 
-#   group_by(actividad) %>% 
-#   ggplot(aes(x = actividad, y = tiempo)) + 
-#   geom_boxplot() +
-#   theme_bw()
-
-
- # BORRAR????
-# Intentando una tabla, capaz es más útil que un gráfico en este caso:
-# datos %>% 
-#   group_by(actividad) %>% 
-#   summarise(
-#      n = n(),
-#     media = mean(tiempo),
-#     mediana = median(tiempo),
-#     sd = sd(tiempo)
-#    )
-
-# DEJAR ESTA ?
-# Esta me gusta más: todo esto lo hizo el chat no? porque lit no se como se hace
-# Jeje masooo, tipo fui copiando cosas que tenía de los tp, y había cosas que le quería cambiar así que eso si le fui preguntando
 datos %>% 
   # str_to_title: Para que use los niveles de actividad con mayúscula la primera letra
   # factor(...., levels): para que las ordene
@@ -229,7 +211,7 @@ datos %>%
     col.names = c("Actividad", "n", "Media", "Mediana", "Desvío estándar"),
     escape = F,
     label = "Tabla 1") %>%
-  kable_styling(latex_options = c("responsive", "hold_position"))
+  kable_styling(latex_options = "hold_position")
 # responsive para que si usamos htlm se ajuste bien creo
 # hold position para que no pase a otra hoja creo
 
@@ -241,7 +223,7 @@ estudio, realizan un nivel de actividad física alto, sin embargo, no hay
 gran diferencia entre los tiempos medios de las personas que realizan
 actividad de niveles moderada y baja.
 
-```{r comorbilidad,fig.width=6, fig.height=4, fig.align='center', echo = F, cache = T}
+```{r comorbilidad, echo = F, out.width='90%', cache = T}
 # Comorbilidad:
 ggplot(datos, aes(x = tiempo, y = comorbilidades)) +
   geom_count(aes(alpha = after_stat(n)), shape = 16, size = 3) +
@@ -249,6 +231,7 @@ ggplot(datos, aes(x = tiempo, y = comorbilidades)) +
   theme_bw()
 ```
 
+<!-- CATEGORIZAR COMORBILIDADES -->
 En base a \@ref(fig:comorbilidad) se espera que el tiempo medio de
 supervivencia para personas con mayor numero de comorbilidades, sea
 menor que para las persona con menos comorbilidades
@@ -284,10 +267,11 @@ kable(
 ```
 
 <!-- VER, no me convence -->
-En \@ref(tab:tablacomorbilidad) puede verse que mucha gente presentó 2, 3 o 4 comorbilidades, y, esos grupos de personas tuvieron tiempos registrados similares. Sólo 3 personas no tuvieron comorbilidades.
+<!-- CATEGORIZAR -->
+En la Tabla \@ref(tab:tablacomorbilidad) puede verse que mucha gente presentó 2, 3 o 4 comorbilidades, y, esos grupos de personas tuvieron tiempos medios registrados similares. Sólo 3 personas no tuvieron comorbilidades.
 
 
-```{r sexoactividad,fig.width=6, fig.height=4, fig.align='center', fig.cap="Actividad de acuerdo al sexo", echo = F, cache = T}
+```{r sexoactividad,fig.cap="Actividad de acuerdo al sexo",out.width='90%', echo = F, cache = T}
 
 # Intento de boxplot sexo y actividad física
 datos %>% 
@@ -310,14 +294,14 @@ datos %>%
 # le cambie el color porque la verdad no los diferenciaba, pero despues ponele el color que tenia
 ```
 
-En \@ref(fig:sexoactividad) puede verse que hay una gran dispersión entre las mujeres que realizan
+En la Figura \@ref(fig:sexoactividad) puede verse que hay una gran dispersión entre las mujeres que realizan
 bajo nivel de actividad física en los tiempos de supervivencia, a
 diferencia de los hombres, que presentan tiempos mucho más concentrados.
 Los pacientes masculinos que participaron del estudio y realizaban bajos niveles de actividad física no sobrevivieron los dos años, mientras que más del 25% de las mujeres que realizaban actividad con ese mismo nivel, sobrevivieron más de dos años de haberse iniciado en este estudio.
 
 <!-- creo que esta interpretacion esta super buena pero no se si el boxplot es lo mejor, creeria que con el de kaplan meier queda mejor el que es como la curvita bajando-->
 
-```{r actividadfumadores, echo = F,fig.width=6, fig.height=4, fig.align='center', fig.cap = 'Actividad de acuerdo a si son fumadores', cache = T}
+```{r actividadfumadores, echo = F, fig.cap = 'Tiempo de los pacientes teniendo en cuenta si son fumadores activos o no y el nivel de actividad física', out.width='90%', cache = T}
 
 # Intento de actividad física y fumadores
 datos %>% 
@@ -337,7 +321,7 @@ datos %>%
 
 ```
 
-En \@ref(fig:actividadfumadores) no parece verse diferencia entre los distintos niveles de actividad física entre los pacientes que fuman. Así como tampoco parece presentarse diferencias en aquellos que no fuman, es decir, en los pacientes no fumadores, realizar actividad física con mayor o menor frecuencia no parece influir en el tiempo de supervivencia.
+En la Figura \@ref(fig:actividadfumadores) no parece verse diferencia entre los distintos niveles de actividad física entre los pacientes que fuman. Así como tampoco parece presentarse diferencias en aquellos que no fuman, es decir, en los pacientes no fumadores, realizar actividad física con mayor o menor frecuencia no parece influir en el tiempo de supervivencia.
 
 
 
@@ -361,14 +345,15 @@ $$
 
 
 ### Modelos de una variable
+Empezamos con el modelo más simple:
 
-Empezamos con el modelo más simple: 
 - Modelo nulo o basal:
-(- edad = 0? Creo que habría que categorizar 
-- hombre
-- no fumador
-- actividad baja 
-- ninguna comorbilidad) 
+  - edad = 0 (¿habría que categorizar?)
+  - hombre
+  - no fumador
+  - actividad baja
+  - ninguna comorbilidad
+
 
 $$
 h_i(t) = h_0 (t) \quad i = \overline{1,110}
@@ -400,12 +385,11 @@ summary(mod_0)
 ```
 
 
-```{r Supervivencia, echo = F}
+```{r Supervivencia, echo = F,, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier',  out.width='80%', cache = T}
 
 ggsurvplot(fit = mod_0, data = datos,
-           title = "Función de supervivencia estimada (K-M)",
            censor.shape = 20,
-           xlab = "Meses",
+           xlab = "Tiempo (en meses)",
            ylab = "Probabilidad de Supervivencia estimada",
            legend = "none",
            legend.title = "")
@@ -415,52 +399,64 @@ ggsurvplot(fit = mod_0, data = datos,
 
 
 
--   Modelo 1: sólo con edad (porque complicación es el de
-    censura/evento) <!-- VER SI HAY QUE CATEGORIZAR EDAD --> 
+-   Modelo 1: sólo con edad  <!-- VER SI HAY QUE CATEGORIZAR EDAD --> 
 $$
-    h_i(t) = h_0 (t) \cdot e^{\beta_0 \cdot x_i} \quad i = \overline{1,110}
+    h_i(t) = h_0 (t) \cdot e^{\beta_1 \cdot x_i} \quad i = \overline{1,110}
 $$
 <!-- CATEGORIZAR EDADES -->
-```{r Modelo1, include = F}
-# Modelo para graficar
+```{r supervivencia1, include = F}
+# Para graficar:
+# Calcula la función de supervivencia
 mod_1 <- survfit(Surv(tiempo, complicacion) ~ edad,
                  data = datos)
 summary(mod_1)
+
 ```
 
 
-```{r Supervivencia_M1, echo = F}
-
+```{r grafsup1, echo = F,  fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier de acuerdo a las edades',out.width='80%', cache = T}
 ggsurvplot(fit = mod_1, data = datos,
-           title = "Función de supervivencia estimada (K-M)",
            censor.shape = 20,
-           xlab = "Meses",
+           xlab = "Tiempo (en meses)",
            ylab = "Probabilidad de Supervivencia estimada",
            legend = "none",
            legend.title = "")
 
 ```
 
+```{r testm1, include = F}
+
+# Haciendo el modelo de cox para edad:
+modc_1 <- coxph(Surv(tiempo, complicacion) ~ edad, 
+               ties = "breslow", data = datos)
+summary(modc_1)
+
+
+# Test de verosimilitud:
+# -2*log(reducido) - log(completo)
+-2*modc_1$loglik[1] - modc_1$loglik[2]
+
+
+```
 
 
 -   Modelo 2: sólo con Sexo ($s_i$ = 0 hombre, $s_i$ = 1 mujer)
 
 $$
-h_i(t) = h_0 (t) \cdot e^{\beta_1 \cdot s_i} \quad i = \overline{1,110}
+h_i(t) = h_0 (t) \cdot e^{\beta_2 \cdot s_i} \quad i = \overline{1,110}
 $$
 
-```{r Modelo2, include = F}
-# Modelo para graficar
+```{r supervivencia2, include = F}
+# Supervivencia para graficar
 mod_2 <- survfit(Surv(tiempo, complicacion) ~ sexo,
                  data = datos)
 summary(mod_2)
 ```
 
 
-```{r Supervivencia_M2, echo = F}
+```{r grafsup2, echo = F, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier según sexo', out.width='80%', cache = T}
 
 ggsurvplot(fit = mod_2, data = datos,
-           title = "Función de supervivencia estimada (K-M)",
            censor.shape = 20,
            xlab = "Meses",
            ylab = "Probabilidad de Supervivencia estimada",
@@ -468,19 +464,41 @@ ggsurvplot(fit = mod_2, data = datos,
            legend.title = "")
 
 ```
+Se espera que el tiempo de supervivencia de las mujeres sea mayor que la de los hombres en los primeros 4 años, pero después los tiempos de supervivencia se acercan a los mismos valores. Incluso las pacientes de sexo femenino llegan a tener menores tiempos de supervivencia que los masculinos.
 
-Las mujeres parecen sobrevivir más en los primeros 4 años aprox, pero, parecería que más hombres sobreviven luego de ese tiempo.
-<!-- Alternativa
-Se espera que el tiempo de supervivencia de las mujeres sea mayor que la de los hombres en los primeros 4 anios, pero despues de este tiempo los dos tiempos de supervivencia se regularizan hacia la misma probabilidad e inclusive el genero femenino llega a tener menores tiempos de supervivencia que el masculino-->
+_Test de Razón de Verosimilitud_
+$$
+H_0) \beta_2 = 0 \quad H_1) \beta_2 \neq 0
+$$
+```{r testm2, include = F}
+
+# Haciendo el modelo de cox para sexo:
+modc_2 <- coxph(Surv(tiempo, complicacion) ~ sexo, 
+               ties = "breslow", data = datos)
+summary(modc_2)
+
+
+# Test de verosimilitud:
+# -2*log(reducido) - log(completo)
+-2*modc_2$loglik[1] - modc_2$loglik[2]
+
+
+```
+
+$$
+TRV = 1076.14 > 3.84 \Rightarrow  Rechazo \quad H0
+$$
+Entonces puede concluirse con una significación del 5%, que la variable Sexo aporta significativamente a la explicación del tiempo de supervivencia de los pacientes????
+
+
 
 -   Modelo 3: sólo con Fumador ($f_i$ = 0 No fumador, $f_i$ = 1 Fumador)
 
 $$
-h_i(t) = h_0 (t) \cdot e^{\beta_2 \cdot f_i} \quad i = \overline{1,110}
+h_i(t) = h_0 (t) \cdot e^{\beta_3 \cdot f_i} \quad i = \overline{1,110}
 $$
 
-
-```{r Modelo3, include = F}
+```{r supervivencia3, include = F}
 # Modelo para graficar
 mod_3 <- survfit(Surv(tiempo, complicacion) ~ fumador,
                  data = datos)
@@ -488,10 +506,9 @@ summary(mod_3)
 ```
 
 
-```{r Supervivencia_M3, echo = F}
+```{r grafsup3, echo = F, fig.cap = 'Supervivencia estimada por Kaplan-Meier según si los pacientes son fumadores activos o no',out.width='80%', cache = T}
 
 ggsurvplot(fit = mod_3, data = datos,
-           title = "Función de supervivencia estimada (K-M)",
            censor.shape = 20,
            xlab = "Meses",
            ylab = "Probabilidad de Supervivencia estimada",
@@ -501,18 +518,48 @@ ggsurvplot(fit = mod_3, data = datos,
 ```
 Los pacientes que no son fumadores muestran tiempos de supervivencia más altos que aquellos que sí fuman activamente.
 
+_Test de Razón de Verosimilitud_
+$$
+H_0) \beta_3 = 0 \quad H_1) \beta_3 \neq 0
+$$
+```{r testm3, include = F}
 
--   Modelo 4: sólo con Actividad ($a_1$ $a_2$) ( 0 0) Actividad Baja ( 1
-    0)  Actividad Moderada ( 0 1) Actividad Alta
+# Haciendo el modelo de cox para sexo:
+modc_3 <- coxph(Surv(tiempo, complicacion) ~ fumador, 
+               ties = "breslow", data = datos)
+summary(modc_3)
 
-<!-- VER DE PONER ESA CATEGORIZACION EN UNA TABLA -->
+
+# Test de verosimilitud:
+# -2*log(reducido) - log(completo)
+-2*modc_3$loglik[1] - modc_3$loglik[2]
+
+
+```
 
 $$
-h_i(t) = h_0 (t) \cdot e^{\beta_3 \cdot a_{1i} +
-                          \beta_4 \cdot a_{2i}} \quad i = \overline{1,110}
+TRV = 1066.14 > 3.84 \Rightarrow  Rechazo \quad H0
+$$
+Entonces puede concluirse con una significación del 5%, que la variable Fumador aporta significativamente a la explicación del tiempo de supervivencia de los pacientes.
+
+
+-   Modelo 4: sólo con Actividad 
+\begin{tabular}{l r}
+$a_1$ & $a_2$ \\
+\hline
+0 & 0  \\
+1 & 0  \\
+0 & 1  \\
+\end{tabular}
+
+
+
+$$
+h_i(t) = h_0 (t) \cdot e^{\beta_4 \cdot a_{1i} +
+                          \beta_5 \cdot a_{2i}} \quad i = \overline{1,110}
 $$
 
-```{r Modelo4, include = F}
+```{r supervivencia4, include = F}
 # Modelo para graficar
 mod_4 <- survfit(Surv(tiempo, complicacion) ~ actividad,
                  data = datos)
@@ -520,10 +567,10 @@ summary(mod_4)
 ```
 
 
-```{r Supervivencia_M4, echo = F}
+```{r grafsup4, echo = F, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier de acuerdo a los niveles de actividad física', out.width='80%', cache = T}
+
 # ORDENAR ALTA MODERADA BAJA O BAJA MODERADA ALTA
 ggsurvplot(fit = mod_4, data = datos,
-           title = "Función de supervivencia estimada (K-M)",
            censor.shape = 20,
            xlab = "Meses",
            ylab = "Probabilidad de Supervivencia estimada",
@@ -533,9 +580,31 @@ ggsurvplot(fit = mod_4, data = datos,
 ```
 No parece haber grandes diferencias en los tiempos de supervivencia de los pacientes que participaron del estudio que realizaban distintos niveles de actividad física.
 
+_Test de Razón de Verosimilitud_
+$$
+H_0) \beta_4 = \beta_5 = 0 \quad H_1) Al \: menos \: uno \: \neq 0
+$$
+```{r testm4, include = F}
+
+# Haciendo el modelo de cox para sexo:
+modc_4 <- coxph(Surv(tiempo, complicacion) ~ actividad, 
+               ties = "breslow", data = datos)
+summary(modc_4)
+
+
+# Test de verosimilitud:
+# -2*log(reducido) - log(completo)
+-2*modc_4$loglik[1] - modc_4$loglik[2]
+```
+
+$$
+TRV = 1077.5 > 3.84 \Rightarrow  Rechazo \quad H0
+$$
+Con una significación del 5%, puede decirse que el nivel de actividad física que realice el paciente afecta al tiempo de supervivencia estimado. VER (NO DEBERÍA SER QUE NO CAMBIA TANTO, EN LOS GRÁFICOS NO PARECERÍA QUE CAMBIAN TANTO)
+
 
 -   Modelo 5: sólo con Comorbilidad
-    <!-- VER SI CATEGORIZAR O USAR LOS DISTINTOS VALORES -->
+    <!-- CATEGORIZAR  -->
 
 $$
 h_i(t) = h_0 (t) \cdot e^{\beta_5 \cdot c_i} \quad i = \overline{1,110}
@@ -550,17 +619,16 @@ summary(mod_5)
 ```
 
 
-```{r Supervivencia_M5, echo = F}
+```{r Supervivencia_M5, out.width='80%', echo = F}
 
 ggsurvplot(fit = mod_5, data = datos,
-           title = "Función de supervivencia estimada (K-M)",
            censor.shape = 20,
            xlab = "Meses",
            ylab = "Probabilidad de Supervivencia estimada",
            legend.labs = c("0","1", "2", "3", "4", "5", "6", "7"),
            legend.title = "Comorbilidades")
 
-# NO TIENE TANTO SENTIDO PONERLO PORQUE HAY 3 QUE NO TUVIERON, UNA PERSONA QUE TUVO 7, ETC (no todas las cantidades de comorbilidades tienen números de observaciones útiles)
+
 
 ```
 
@@ -623,9 +691,6 @@ $$
 para mi no lo vale de agregar todas la variables porque es medio mucho no?-->
 \newpage
 
-### Tests
-
-_Test de Razón de Verosimilitud_
 
 
 
