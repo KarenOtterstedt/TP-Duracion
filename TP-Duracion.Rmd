@@ -22,7 +22,10 @@ output:
 <!-- \usepackage{caption} -->
 <!-- \captionsetup[figure]{labelformat=default, labelsep=colon, name=Figura} -->
 
-<!--  ES PARA QUE USE COSAS EN ESPAÑOL COMO FIGURA EN VEZ DE FIGURE Y ESO, Y PARA QUE CUANDO REFERENCIEMOS ALGO VAYA AL GRÁFICO Y NO A LA CAPTION --> 
+<!--  ES PARA QUE USE COSAS EN ESPAÑOL COMO FIGURA EN VEZ DE FIGURE Y ESO, Y PARA QUE CUANDO REFERENCIEMOS ALGO VAYA AL GRÁFICO Y NO A LA CAPTION 
+
+
+Lo de crear el header.tex no lo entendi, hay que crearlo cada uno en una direccion especifica?--> 
 
 ```{r CHAT, include = F}
 # Creo que para ver lo de selección de modelos tenemos que hacer dummies con las variables, de última eso podemos hacer meet o juntarnos y verlo el lunes
@@ -61,7 +64,7 @@ library(survMisc)  # Para realizar el test de tendencia
 library(ggpubr)    # Manejo de gráficos con ggplot (o ggsurvplot)
 
 # Para que las tablas, etc esté en español
-# tinytex::tlmgr_install("babel-spanish")
+tinytex::tlmgr_install("babel-spanish")
 
 
 ```
@@ -222,7 +225,7 @@ datos %>%
     across(where(is.numeric), # Para que sólo use 2 decimales
            ~round(.x, 2))) %>%
   kable(
-    caption = "\\parbox{.9\\linewidth}{\\centering Medidas descriptivas de los pacientes de acuerdo a su nivel de actividad física}",
+    caption = "Medidas descriptivas de los pacientes de acuerdo a su nivel de actividad física",
     col.names = c("Actividad", "n", "Media", "Mediana", "Desvío estándar"),
     escape = F,
     label = "Tabla 1") %>%
@@ -251,6 +254,8 @@ supervivencia para personas con mayor numero de comorbilidades, sea
 menor que para las persona con menos comorbilidades
 <!-- No sé si me convence porque siento que hay pocas personas que tuvieron muchas comorbilidades, ponele que tuvieron 7 fue una, pero que tuvieron 6 comorbilidades fueron 3 y siento que podrían tener comportamiento parecido a las personas que tuvieron menos porque es como que hay dos en los primeros tiempos y uno que está más avanzado el estudio, pero siento que si hubiera más observaciones con esa cantidad de comorbilidades capaz serían parecidos a los otros  -->
 
+<!-- Tienes razon, que prefieres que le pongamos que si aumentamos el tamaño este seria el tiempo medio o podemos decir que un numero alto de comorbilidades es de 4 en adelante y ahi ya queda xd-->
+
 ```{r tablacomorbilidad, echo = F, cache = T}
 
 
@@ -267,7 +272,7 @@ datos %>%
     across(where(is.numeric),
            ~round(.x, 2))) %>%
 kable(
-  caption = "\\parbox{.9\\linewidth}{\\centering Medidas descriptivas de los pacientes de acuerdo a la cantidad de comorbilidades que presentaron}",
+  caption = "Medidas descriptivas de los pacientes de acuerdo a la cantidad de comorbilidades que presentaron",
   col.names = c("Comorbilidades", "n", "Media", "Mediana", "Desvío estándar"),
   escape = FALSE
 ) %>% 
@@ -280,6 +285,7 @@ kable(
 
 <!-- VER, no me convence -->
 En \@ref(tab:tablacomorbilidad) puede verse que mucha gente presentó 2, 3 o 4 comorbilidades, y, esos grupos de personas tuvieron tiempos registrados similares. Sólo 3 personas no tuvieron comorbilidades.
+
 
 ```{r sexoactividad,fig.width=6, fig.height=4, fig.align='center', fig.cap="Actividad de acuerdo al sexo", echo = F, cache = T}
 
@@ -295,17 +301,21 @@ datos %>%
   group_by(sexo, actividad) %>%
   ggplot(aes(x = sexo, y = tiempo, fill = actividad))+
   geom_boxplot()+
-  scale_fill_manual(values = c("#92C5DE", "#C2A5CF","#F4A582"))  +
+  scale_fill_manual(values = c("#92C5DE", "red","#F4A582"))  +
   labs(x = "Sexo",
        y = "Tiempo (en meses)",
        fill = "Actividad") +
   theme_bw() 
+
+# le cambie el color porque la verdad no los diferenciaba, pero despues ponele el color que tenia
 ```
 
 En \@ref(fig:sexoactividad) puede verse que hay una gran dispersión entre las mujeres que realizan
 bajo nivel de actividad física en los tiempos de supervivencia, a
 diferencia de los hombres, que presentan tiempos mucho más concentrados.
 Los pacientes masculinos que participaron del estudio y realizaban bajos niveles de actividad física no sobrevivieron los dos años, mientras que más del 25% de las mujeres que realizaban actividad con ese mismo nivel, sobrevivieron más de dos años de haberse iniciado en este estudio.
+
+<!-- creo que esta interpretacion esta super buena pero no se si el boxplot es lo mejor, creeria que con el de kaplan meier queda mejor el que es como la curvita bajando-->
 
 ```{r actividadfumadores, echo = F,fig.width=6, fig.height=4, fig.align='center', fig.cap = 'Actividad de acuerdo a si son fumadores', cache = T}
 
@@ -460,7 +470,8 @@ ggsurvplot(fit = mod_2, data = datos,
 ```
 
 Las mujeres parecen sobrevivir más en los primeros 4 años aprox, pero, parecería que más hombres sobreviven luego de ese tiempo.
-
+<!-- Alternativa
+Se espera que el tiempo de supervivencia de las mujeres sea mayor que la de los hombres en los primeros 4 anios, pero despues de este tiempo los dos tiempos de supervivencia se regularizan hacia la misma probabilidad e inclusive el genero femenino llega a tener menores tiempos de supervivencia que el masculino-->
 
 -   Modelo 3: sólo con Fumador ($f_i$ = 0 No fumador, $f_i$ = 1 Fumador)
 
@@ -606,7 +617,10 @@ $$
 
 
 
-<!-- COMPLETAR LOS MODELOS QUE FALTAN PERO PRIMERO QUERÍA VER SI AGREGAR TODAS LAS VARIABLES O NO -->
+<!-- COMPLETAR LOS MODELOS QUE FALTAN PERO PRIMERO QUERÍA VER SI AGREGAR TODAS LAS VARIABLES O NO 
+
+
+para mi no lo vale de agregar todas la variables porque es medio mucho no?-->
 \newpage
 
 ### Tests
