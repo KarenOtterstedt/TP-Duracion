@@ -88,7 +88,7 @@ library(ggpubr)    # Manejo de gráficos con ggplot (o ggsurvplot)
 
 datos <- read_csv("conjunto_grupo_7.csv")
 summary(datos)
-view(datos)
+
 ```
 
 ```{r Paletas_colores, include = F}
@@ -154,7 +154,7 @@ view(datos)
 
 # Análisis Descriptivo
 
-```{r Edades, echo = F, fig.cap = 'Histograma de las edades de los pacientes al iniciar su seguimiento',out.width='90%', cache = T}
+```{r Edades, echo = F, fig.cap = 'Histograma de las edades de los pacientes al iniciar su seguimiento',out.width='70%', cache = T, fig.height=3.5, fig.width=5}
 
 # Histograma:
 ggplot(datos, aes(x = edad)) +
@@ -163,7 +163,7 @@ ggplot(datos, aes(x = edad)) +
   labs(y = "Frecuencia", x = "Edad")
 ```
 
-En base la figura \@ref(fig:Edades) se puede ver que la mayoría de los pacientes en el estudio son mayores a 60 años.
+En base la Figura \@ref(fig:Edades) se puede ver que la mayoría de los pacientes en el estudio son mayores a 60 años.
 
 ```{r fumadores, echo  = F, fig.cap='No Fumadores vs Fumadores',out.width='90%', cache = T}
 
@@ -180,14 +180,9 @@ datos %>%
 
 ```
 
-A pesar de presentar algunos outliers, puede verse en el gráfico
-\@ref(fig:fumadores) que aquellos pacientes que padecieron cierta
-enfermedad crónica respiratoria y fuman presentaron menores tiempos de
-supervivencia que sus contrapartes que no fuman. Los pacientes que fuman
-parecen casi en su totalidad presentar tiempos de supervivencia menores
-que el 50% de aquellos que no son fumadores activos.
+A pesar de presentar algunos outliers, se puede ver en la Figura \@ref(fig:fumadores) que aquellos pacientes que padecieron cierta enfermedad crónica respiratoria y fuman presentaron menores tiempos de supervivencia que sus contrapartes que no fuman. Los pacientes que fuman en promedio presentan tiempos de supervivencia menores frente aquellos que no son fumadores activos.
 
-```{r tab-actividad, echo = FALSE, fig.cap = 'Nivel de actividad física de los pacientes', cache = TRUE}
+```{r tactividad, echo = FALSE, fig.cap = 'Nivel de actividad física de los pacientes', cache = TRUE}
 
 datos %>% 
   # str_to_title: Para que use los niveles de actividad con mayúscula la primera letra
@@ -207,8 +202,8 @@ datos %>%
     across(where(is.numeric), # Para que sólo use 2 decimales
            ~round(.x, 2))) %>%
   kable(
-    caption = "Medidas descriptivas de los pacientes de acuerdo a su nivel de actividad física",
-    col.names = c("Actividad", "n", "Media", "Mediana", "Desvío estándar"),
+    caption = "Medidas descriptivas de los pacientes de acuerdo a su nivel de actividad fisica",
+    col.names = c("Actividad", "n", "Media", "Mediana", "Desvio estandar"),
     escape = F,
     label = "Tabla 1") %>%
   kable_styling(latex_options = "hold_position")
@@ -218,7 +213,7 @@ datos %>%
 ```
 
 
-En base a la \@ref(tab:actividad) pocas personas de las que participaron en el
+En base a la \@ref(tab:tactividad) pocas personas de las que participaron en el
 estudio, realizan un nivel de actividad física alto, sin embargo, no hay
 gran diferencia entre los tiempos medios de las personas que realizan
 actividad de niveles moderada y baja.
@@ -233,8 +228,8 @@ ggplot(datos, aes(x = tiempo, y = comorbilidades)) +
 
 <!-- CATEGORIZAR COMORBILIDADES -->
 En base a \@ref(fig:comorbilidad) se espera que el tiempo medio de
-supervivencia para personas con mayor numero de comorbilidades, sea
-menor que para las persona con menos comorbilidades
+supervivencia para personas con mayor número de comorbilidades, sea
+menor que para las personas con menos comorbilidades. 
 <!-- No sé si me convence porque siento que hay pocas personas que tuvieron muchas comorbilidades, ponele que tuvieron 7 fue una, pero que tuvieron 6 comorbilidades fueron 3 y siento que podrían tener comportamiento parecido a las personas que tuvieron menos porque es como que hay dos en los primeros tiempos y uno que está más avanzado el estudio, pero siento que si hubiera más observaciones con esa cantidad de comorbilidades capaz serían parecidos a los otros  -->
 
 <!-- Tienes razon, que prefieres que le pongamos que si aumentamos el tamaño este seria el tiempo medio o podemos decir que un numero alto de comorbilidades es de 4 en adelante y ahi ya queda xd-->
@@ -268,7 +263,14 @@ kable(
 
 <!-- VER, no me convence -->
 <!-- CATEGORIZAR -->
-En la Tabla \@ref(tab:tablacomorbilidad) puede verse que mucha gente presentó 2, 3 o 4 comorbilidades, y, esos grupos de personas tuvieron tiempos medios registrados similares. Sólo 3 personas no tuvieron comorbilidades.
+En la Tabla \@ref(tab:tablacomorbilidad) puede verse que mucha gente presentó 2, 3 o 4 comorbilidades, y, esos grupos de personas tuvieron tiempos medios registrados similares. Sólo 3 personas no tuvieron comorbilidades;, por lo tanto para enriquecer un poco más el estudio se agrupan las personas por una nueva variable llamada $"Tipo \ de \   comorbilidad "$ la cual posee 3 niveles, el nivel 1 para pacientes que no tuvieron comorbilidades o a lo mucho tuvieron 2, el nivel 2 para pacientes que tuvieron 3 o 4 comorbilidades a lo mucho y el nivel 3 para pacientes que tuvieron mas de 4 comorbilidades.
+
+```{r}
+
+# aqui poner codigo para hacer la variable tipo de comorbilidad
+
+```
+
 
 
 ```{r sexoactividad,fig.cap="Actividad de acuerdo al sexo",out.width='90%', echo = F, cache = T}
