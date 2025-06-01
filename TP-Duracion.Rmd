@@ -18,20 +18,19 @@ output:
 
 
 ```{r CHAT, include = F}
-# Te voy a pedir porfis si podés ver de arreglar los títulos de las tablas? Porque no sé qué toqué pero los rompí :P :(
-
 # TO DO: (alt + 127)
 # ⌂ Introducción
-# ⌂ Que se referencie Figura 1, etc (en vez de sólo el 1)
 # ⌂ Referenciar tablas
 # ⌂ Centrar captions (de tablas y figuras)
 # ⌂ Mejorar captions
-# !(⌂) CATEGORIZAR COMORBILIDAD (0-2, 3-4, >=5)
-# !(⌂) Siento que los valores de TRV son demasiado altos VER SI ESTAN BIEN
+# !(⌂) VER SI HAY QUE PONER TITULOS O NO EN LOS GRAFICOS
 # !(⌂) Terminar de armar modelos y elegir uno
+# !(⌂) RH, IC, etc
+# !(⌂) Conclusiones
 
 
 
+# YA ESTÁ HECHO (ignorar)
 # PARA VER DE CATEGORIZAR COMORBILIDADES:
 # Otro Estudio solo el 6% de los pacientes con enfermedad pulmonar obstructiva crónica no tenía otra afección médica crónica, con un promedio de 3.7 comorbilidades en pacientes con EPOC frente a 1.8 en controles sanos.
 # 
@@ -42,17 +41,6 @@ output:
 ```
 
 
-<!-- LISTA DE COSAS PARA HACER:
-seleccionamos el modelo que queremos, comparamos los distintos niveles, y después qué? Concluimos? IC? Qué mas? jashtag PERDIDA :(
-
-    - CATEGORIZAR COMORBILIDADES
-    - VER SI CATEGORIZAR EDAD
-    
-    - Selección de modelos (test de razón de verosimilitud)
-    - Razones de hazard (con IC, etc)
-    - Conclusiones
-    -->
-    
 ```{r Seteando_opciones, include = F}
 knitr::opts_chunk$set(
   warning = FALSE,
@@ -155,8 +143,9 @@ summary(datos)
 \newpage
 
 # Análisis Descriptivo
+<!-- VER DE AGREGAR ALGO ANTES DE TANTO GRÁFICO -->
 
-```{r Edades, echo = F, fig.cap = 'Histograma de las edades de los pacientes al iniciar su seguimiento',out.width='70%', cache = T, fig.height=3.5, fig.width=5}
+```{r Edades, echo = F, fig.cap = 'Histograma de las edades de los pacientes al iniciar su seguimiento',out.width='70%', cache = T}
 
 # Histograma:
 ggplot(datos, aes(x = edad)) +
@@ -167,7 +156,33 @@ ggplot(datos, aes(x = edad)) +
 
 En base la Figura \@ref(fig:Edades) se puede ver que la mayoría de los pacientes en el estudio son mayores a 60 años.
 
-```{r fumadores, echo  = F, fig.cap='No Fumadores vs Fumadores',out.width='90%', cache = T}
+
+```{r tabla-sexo, echo = F}
+
+datos %>% 
+  group_by(sexo) %>% 
+  # Para que ponga las primeras letras en mayúscula:
+mutate(sexo = str_to_title(as.character(sexo))) %>% 
+  summarise(n = n(),
+            media = mean(tiempo),
+            mediana = median(tiempo),
+            sd = sd(tiempo)) %>% 
+    mutate(
+    across(where(is.numeric), # Para que sólo use 2 decimales
+           ~round(.x, 2))) %>%
+  kable(
+    caption = "Medidas descriptivas de los pacientes de acuerdo a su sexo biológico",
+    col.names = c("Sexo", "n", "Media", "Mediana", "Desvio estandar"),
+    escape = F,
+    label = "Tabla 1") %>%
+  kable_styling(latex_options = "hold_position")
+
+
+```
+Puede verse (Tabla \@ref(tab:tabla-sexo)) que más de la mitad de los pacientes son de sexo femenino, y presentan tiempos mayores que sus contrapartes masculinas.
+
+
+```{r graf-fumadores, echo  = F, fig.cap='No Fumadores vs Fumadores',out.width='70%', cache = T}
 
 # Boxplot fumadores:
 datos %>% 
@@ -182,9 +197,9 @@ datos %>%
 
 ```
 
-A pesar de presentar algunos outliers, se puede ver en la Figura \@ref(fig:fumadores) que aquellos pacientes que padecieron cierta enfermedad crónica respiratoria y fuman presentaron menores tiempos de supervivencia que sus contrapartes que no fuman. Los pacientes que fuman en promedio presentan tiempos de supervivencia menores frente aquellos que no son fumadores activos.
+A pesar de presentar algunos outliers, se puede ver en la Figura \@ref(fig:graf-fumadores) que aquellos pacientes que padecieron cierta enfermedad crónica respiratoria y fuman presentaron menores tiempos de supervivencia que sus contrapartes que no fuman. Los pacientes que fuman en promedio presentan tiempos de supervivencia menores frente aquellos que no son fumadores activos.
 
-```{r tactividad, echo = FALSE, fig.cap = 'Nivel de actividad física de los pacientes', cache = TRUE}
+```{r tabla-actividad, echo = FALSE, fig.cap = 'Nivel de actividad física de los pacientes', out.width='70%', cache = TRUE}
 
 datos %>% 
   # str_to_title: Para que use los niveles de actividad con mayúscula la primera letra
@@ -207,7 +222,7 @@ datos %>%
     caption = "Medidas descriptivas de los pacientes de acuerdo a su nivel de actividad fisica",
     col.names = c("Actividad", "n", "Media", "Mediana", "Desvio estandar"),
     escape = F,
-    label = "Tabla 1") %>%
+    label = "Tabla 2") %>%
   kable_styling(latex_options = "hold_position")
 # responsive para que si usamos htlm se ajuste bien creo
 # hold position para que no pase a otra hoja creo
@@ -215,30 +230,44 @@ datos %>%
 ```
 
 
-En base a la \@ref(tab:tactividad) pocas personas de las que participaron en el
+En base a la \@ref(tab:tabla-actividad) pocas personas de las que participaron en el
 estudio, realizan un nivel de actividad física alto, sin embargo, no hay
 gran diferencia entre los tiempos medios de las personas que realizan
 actividad de niveles moderada y baja.
 
 ```{r comorbilidad, echo = F, out.width='90%', cache = T}
 # Comorbilidad:
-ggplot(datos, aes(x = tiempo, y = comorbilidades)) +
-  geom_count(aes(alpha = after_stat(n)), shape = 16, size = 3) +
-  scale_alpha(range = c(0.3, 1)) +
-  theme_bw()
+# ggplot(datos, aes(x = tiempo, y = comorbilidades)) +
+#   geom_count(aes(alpha = after_stat(n)), shape = 16, size = 3) +
+#   scale_alpha(range = c(0.3, 1)) +
+#   theme_bw()
 ```
 
-<!-- CATEGORIZAR COMORBILIDADES -->
-En base a \@ref(fig:comorbilidad) se espera que el tiempo medio de
-supervivencia para personas con mayor número de comorbilidades, sea
-menor que para las personas con menos comorbilidades. 
+<!-- En base a \@ref(fig:comorbilidad) se espera que el tiempo medio de -->
+<!-- supervivencia para personas con mayor número de comorbilidades, sea -->
+<!-- menor que para las personas con menos comorbilidades.  -->
 <!-- No sé si me convence porque siento que hay pocas personas que tuvieron muchas comorbilidades, ponele que tuvieron 7 fue una, pero que tuvieron 6 comorbilidades fueron 3 y siento que podrían tener comportamiento parecido a las personas que tuvieron menos porque es como que hay dos en los primeros tiempos y uno que está más avanzado el estudio, pero siento que si hubiera más observaciones con esa cantidad de comorbilidades capaz serían parecidos a los otros  -->
 
 <!-- Tienes razon, que prefieres que le pongamos que si aumentamos el tamaño este seria el tiempo medio o podemos decir que un numero alto de comorbilidades es de 4 en adelante y ahi ya queda xd-->
 
-```{r tablacomorbilidad, echo = F, cache = T}
+```{r categorizando-comorbilidades, include = F}
+
+datos <- datos %>% 
+  mutate(comorbilidades = case_when(
+    comorbilidades <= 2 ~ "pocas",
+    (comorbilidades == 3 | comorbilidades == 4) ~ "moderadas",
+    T ~ "muchas")) %>% 
+   mutate(
+    comorbilidades = str_to_title(as.character(comorbilidades)),
+    comorbilidades = factor(comorbilidades,
+                  levels = c("Pocas", "Moderadas", "Muchas"))) 
+```
+
+Algunas cantidades de comorbilidades fueron poco frecuentes entre los pacientes, sólo 3 de los 110 no tuvieron, un paciente presentó 7, otros 3 presentaron 6, entre otros. Por lo que se agruparon grupos de pacientes de acuerdo a las $"Cantidades \ de  \ comorbilidades"$ que pasaron, en tres niveles: pocas (0-2 comorbilidades), moderadas (3-4 comorbilidades) y muchas ( > 5 comorbilidades). 
 
 
+
+```{r tabla-comorbilidad, echo = F, cache = T}
 datos %>% 
   mutate(comorbilidades = factor(comorbilidades)) %>% 
   group_by(comorbilidades) %>% 
@@ -263,16 +292,7 @@ kable(
 
 ```
 
-<!-- VER, no me convence -->
-<!-- CATEGORIZAR -->
-En la Tabla \@ref(tab:tablacomorbilidad) puede verse que mucha gente presentó 2, 3 o 4 comorbilidades, y, esos grupos de personas tuvieron tiempos medios registrados similares. Sólo 3 personas no tuvieron comorbilidades;, por lo tanto para enriquecer un poco más el estudio se agrupan las personas por una nueva variable llamada $"Tipo \ de \   comorbilidad "$ la cual posee 3 niveles, el nivel 1 para pacientes que no tuvieron comorbilidades o a lo mucho tuvieron 2, el nivel 2 para pacientes que tuvieron 3 o 4 comorbilidades a lo mucho y el nivel 3 para pacientes que tuvieron mas de 4 comorbilidades.
-
-```{r}
-
-# aqui poner codigo para hacer la variable tipo de comorbilidad
-
-```
-
+En la Tabla \@ref(tab:tabla-comorbilidad) puede verse que mucha gente presentó pocas comorbilidades, y poca gente que presentó muchas. El tiempo medio de las personas que sufrieron una cantidad moderada de comorbilidades es mayor que los grupos restantes, pudiendo verse que le siguen los pacientes que sufrieron pocas, y, por último, con valores menores aquellos que presentaron muchas.
 
 
 ```{r sexoactividad,fig.cap="Actividad de acuerdo al sexo",out.width='90%', echo = F, cache = T}
@@ -289,7 +309,7 @@ datos %>%
   group_by(sexo, actividad) %>%
   ggplot(aes(x = sexo, y = tiempo, fill = actividad))+
   geom_boxplot()+
-  scale_fill_manual(values = c("#92C5DE", "red","#F4A582"))  +
+  scale_fill_manual(values = c("#92C5DE", "brown3","#F4A582"))  +
   labs(x = "Sexo",
        y = "Tiempo (en meses)",
        fill = "Actividad") +
@@ -302,8 +322,6 @@ En la Figura \@ref(fig:sexoactividad) puede verse que hay una gran dispersión e
 bajo nivel de actividad física en los tiempos de supervivencia, a
 diferencia de los hombres, que presentan tiempos mucho más concentrados.
 Los pacientes masculinos que participaron del estudio y realizaban bajos niveles de actividad física no sobrevivieron los dos años, mientras que más del 25% de las mujeres que realizaban actividad con ese mismo nivel, sobrevivieron más de dos años de haberse iniciado en este estudio.
-
-<!-- creo que esta interpretacion esta super buena pero no se si el boxplot es lo mejor, creeria que con el de kaplan meier queda mejor el que es como la curvita bajando-->
 
 ```{r actividadfumadores, echo = F, fig.cap = 'Tiempo de los pacientes teniendo en cuenta si son fumadores activos o no y el nivel de actividad física', out.width='90%', cache = T}
 
@@ -325,7 +343,7 @@ datos %>%
 
 ```
 
-En la Figura \@ref(fig:actividadfumadores) no parece verse diferencia entre los distintos niveles de actividad física entre los pacientes que fuman. Así como tampoco parece presentarse diferencias en aquellos que no fuman, es decir, en los pacientes no fumadores, realizar actividad física con mayor o menor frecuencia no parece influir en el tiempo de supervivencia.
+No parece verse diferencia (Figura \@ref(fig:actividadfumadores)) entre los distintos niveles de actividad física entre los pacientes que fuman. Así como tampoco parece presentarse diferencias en aquellos que no fuman, es decir, en los pacientes no fumadores, realizar actividad física con mayor o menor frecuencia no parece influir en el tiempo de supervivencia.
 
 
 
@@ -345,7 +363,10 @@ $$
 
 ## Selección de modelos:
 
-
+Se utilizó el _Test de Razón de Verosimilitud_, con hipótesis de la forma:
+$$
+H_0) \beta = 0 \quad H_1) \beta \neq 0
+$$
 
 
 ### Modelos de una variable
@@ -376,14 +397,14 @@ modc_0 <- coxph(Surv(tiempo, complicacion) ~ 1,
 ```
 
 
-```{r Supervivencia, echo = F,, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier',  out.width='80%', cache = T}
+```{r Supervivencia, echo = F,, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier',  out.width='60%', cache = T}
 
 ggsurvplot(fit = mod_0, data = datos,
            censor.shape = 20,
            xlab = "Tiempo (en meses)",
            ylab = "Probabilidad de Supervivencia estimada",
            legend = "none",
-           legend.title = "")
+           legend.title = "Gr")
 
 ```
 \vspace{2em}  
@@ -460,10 +481,6 @@ ggsurvplot(fit = mod_2, data = datos,
 ```
 Se espera que el tiempo de supervivencia de las mujeres sea mayor que la de los hombres en los primeros 4 años, pero después los tiempos de supervivencia se acercan a los mismos valores. Incluso las pacientes de sexo femenino llegan a tener menores tiempos de supervivencia que los masculinos.
 
-_Test de Razón de Verosimilitud_
-$$
-H_0) \beta_2 = 0 \quad H_1) \beta_2 \neq 0
-$$
 ```{r testm2, include = F}
 
 # Haciendo el modelo de cox para sexo:
@@ -480,9 +497,11 @@ pchisq(test_m1, df=1, lower.tail = FALSE)
 
 ```
 
-$$
+<!-- VER SI DEJAR O BORRAR
+$$ 
 p-value > 0.05 \Rightarrow  \;No \; Rechazo \; H_0
 $$
+ -->
 La variable Sexo no aporta significativamente a la explicación del tiempo de supervivencia de los pacientes (p > 0.05)
 
 
@@ -502,7 +521,7 @@ summary(mod_3)
 ```
 
 
-```{r grafsup3, echo = F, fig.cap = 'Supervivencia estimada por Kaplan-Meier según si los pacientes son fumadores activos o no',out.width='80%', cache = T}
+```{r grafsup3, echo = F, fig.cap = 'Supervivencia estimada por Kaplan-Meier según si los pacientes son fumadores activos o no',out.width='70%', cache = T}
 
 ggsurvplot(fit = mod_3, data = datos,
            censor.shape = 20,
@@ -514,10 +533,7 @@ ggsurvplot(fit = mod_3, data = datos,
 ```
 Los pacientes que no son fumadores muestran tiempos de supervivencia más altos que aquellos que sí fuman activamente.
 
-_Test de Razón de Verosimilitud_
-$$
-H_0) \beta_3 = 0 \quad H_1) \beta_3 \neq 0
-$$
+
 ```{r testm3, include = F}
 
 # Haciendo el modelo de cox para sexo:
@@ -562,7 +578,7 @@ summary(mod_4)
 ```
 
 
-```{r grafsup4, echo = F, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier de acuerdo a los niveles de actividad física', out.width='80%', cache = T}
+```{r grafsup4, echo = F, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier de acuerdo a los niveles de actividad física', out.width='70%', cache = T}
 
 # ORDENAR ALTA MODERADA BAJA O BAJA MODERADA ALTA
 ggsurvplot(fit = mod_4, data = datos,
@@ -575,10 +591,6 @@ ggsurvplot(fit = mod_4, data = datos,
 ```
 No parece haber grandes diferencias en los tiempos de supervivencia de los pacientes que participaron del estudio que realizaban distintos niveles de actividad física.
 
-_Test de Razón de Verosimilitud_
-$$
-H_0) \beta_4 = \beta_5 = 0 \quad H_1) Al \: menos \: uno \: \neq 0
-$$
 ```{r testm4, include = F}
 
 # Haciendo el modelo de cox para sexo:
@@ -598,32 +610,37 @@ $(p > 0.05)$
 \vspace{2em}  
 
 -   Modelo 5: sólo con Comorbilidad
+\begin{tabular}{l c r}
+$c_1$ & $c_2$ & $ $ \\
+\hline
+0 & 0  & (Pocas comorbilidades)\\
+1 & 0  & (Moderadas comorbilidades)\\
+0 & 1  & (Muchas comorbilidades)\\
+\end{tabular}
+
 
 $$
-h_i(t) = h_0 (t) \cdot e^{\beta_5 \cdot c_i} \quad i = \overline{1,110}
+h_i(t) = h_0 (t) \cdot e^{\beta_5 \cdot c_{1i} +
+                          \beta_6 \cdot c_{2i}}
+  \quad i = \overline{1,110}
 $$
 
 
-```{r Modelo5, include = F}
+```{r Modelo5-comorbilidad, include = F}
 # Modelo para graficar
-# CATEGORIZANDO COMORBILIDADES:
-datos <- datos %>% 
-  mutate(comorbilidades = case_when(
-    comorbilidades <= 2 ~ "pocas",
-    (comorbilidades == 3 | comorbilidades == 4) ~ "moderadas",
-    T ~ "muchas")) %>% 
-   mutate(
-    comorbilidades = str_to_title(as.character(comorbilidades)),
-    comorbilidades = factor(comorbilidades,
-                  levels = c("Pocas", "Moderadas", "Muchas"))) 
+# NO ME ACUERDO COMO CATEGORIZABA R VER QUE LO ESTEMOS PONIENDO IGUAL
 mod_5 <- survfit(Surv(tiempo, complicacion) ~ comorbilidades,
                  data = datos)
 summary(mod_5)
 
+modc_5 <- coxph(Surv(tiempo, complicacion) ~ comorbilidades,
+                data = datos, ties = "breslow")
+summary(modc_5)
+
 ```
 
 
-```{r Supervivencia_M5, out.width='80%', echo = F}
+```{r Supervivencia_M5, out.width='70%', echo = F}
 
 ggsurvplot(fit = mod_5, data = datos,
            censor.shape = 20,
@@ -635,214 +652,214 @@ ggsurvplot(fit = mod_5, data = datos,
 
 
 ```
+La cantidad de comorbilidades no parece afectar el tiempo de supervivencia de los pacientes $(p > 0.05)$
 
+\vspace{4em}
 
-### Modelos de dos variables sin interacción
+Dado que la Edad del paciente y si es Fumador activo o no, resultan significativas, resta analizar si ambos aportan en presencia del otro:
 
--   Modelo 6: Edad y Sexo 
-$$
-    h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot x_i + \beta_2 \cdot s_i}
-$$
-_Test de Razón de Verosimilitud_
-
-```{r testm6, include = F}
-
-# Haciendo el modelo de cox para sexo:
-modc_6 <- coxph(Surv(tiempo, complicacion) ~ edad + sexo, 
-               ties = "breslow", data = datos)
-summary(modc_6)
-
-
-# Test de verosimilitud:
-# -2*log(reducido) - log(completo)
--2*modc_6$loglik[1] - modc_6$loglik[2]
-```
-
-$$
-TRV = 1061 > 3.84 \Rightarrow  Rechazo \quad H0
-$$
-Con una significación del 5%, puede decirse que la edad y el sexo del paciente afecta al tiempo de supervivencia estimado.
-
-
-
-\vspace{2em}  
-
--   Modelo 7: Edad y Fumador 
+- Modelo 6: Edad y Fumador
+El modelo de dos variables resultante es el siguiente:
 $$
     h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot x_i + \beta_3 \cdot f_i}
 $$
-_Test de Razón de Verosimilitud_
 
-```{r testm7, include = F}
 
-# Haciendo el modelo de cox para sexo:
-modc_7 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador, 
+```{r Modelo6-Edad-Fumador, include = F}
+ # VER SI PONER O NO, MEDIO QUE YA ESTA HECHO ARRIBA
+modc_6 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador, 
                ties = "breslow", data = datos)
-summary(modc_7)
+summary(modc_6)
 
-
-# Test de verosimilitud:
-# -2*log(reducido) - log(completo)
--2*modc_7$loglik[1] - modc_7$loglik[2]
 ```
 
-$$
-TRV = 1047.55 > 3.84 \Rightarrow  Rechazo \quad H0
-$$
-Con una significación del 5%, puede decirse que la edad del paciente y si es fumador activo o no afecta al tiempo de supervivencia estimado.
+```{r fumadores-vs-edad, include = F}
+# Modelo reducido (edad) vs modelo completo(edad y fumadores)
+-2*(modc_1$loglik[2] - modc_6$loglik[2])
+```
+Si fuman o no aporta significativamente cuando está edad.
+<!-- VER SI DEJARLO ASÍ O USAR PVALUE -->
+
+```{r edad-vs-fumadores, include = F}
+# Modelo reducido (fumadores) vs modelo completo(edad y fumadores)
+-2*(modc_3$loglik[2] - modc_6$loglik[2])
+```
+La edad también aporta cuando está fumador.
+
+
+<!-- la edad del paciente y si es fumador activo o no afecta al tiempo de supervivencia estimado $(p < 0.05)$. -->
 
 
 
 \vspace{2em}  
 
--   Modelo 8: Edad y Actividad
+
+
+Ahora se analiza si es correcto agregar alguna variable en presencia de edad y fumador:
+
+
+
+### Modelos de tres variables:
+-   Modelo 7: Edad, Fumador y sexo
+
+$$
+    h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot x_i + \beta_3 \cdot f_i +
+    \beta_2 \cdot s_i}
+$$
+
+
+```{r Modelo7-Edad-Fumador-Sexo, include = F}
+# Haciendo el modelo de cox para edad, fumador y sexo:
+modc_7 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + sexo, 
+               ties = "breslow", data = datos)
+summary(modc_7)
+
+-2 * (modc_6$loglik[2] - modc_7$loglik[2])
+
+```
+Parece significativo $(p < 0.05)$ usar un modelo que contenga la Edad del paciente, si es Fumador activo o no, y su Sexo biológico.
+AUNQUE NO PARECE TAAAAN SIGNIFICATIVA VER SI ESTA BIEN HECHO
+
+-   Modelo 8: Edad, Fumador y Actividad
 $$
     h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot x_i + 
+                             \beta_3 \cdot f_i +
                            \beta_4 \cdot a_{1i} +
                            \beta_5 \cdot a_{2i}}
 $$
-_Test de Razón de Verosimilitud_
 
-```{r testm8, include = F}
+```{r Modelo8-Edad-Fumador-Actividad, include = F}
 
 # Haciendo el modelo de cox para sexo:
-modc_8 <- coxph(Surv(tiempo, complicacion) ~ edad + actividad, 
+modc_8 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + actividad, 
                ties = "breslow", data = datos)
 summary(modc_8)
 
 
 # Test de verosimilitud:
 # -2*log(reducido) - log(completo)
--2*modc_8$loglik[1] - modc_8$loglik[2]
+-2*(modc_6$loglik[2] - modc_8$loglik[2])
 ```
-
-$$
-TRV = 1063 > 3.84 \Rightarrow  Rechazo \quad H0
-$$
-Con una significación del 5%, puede decirse que la edad y el nivel de actividad física que realice el paciente afecta al tiempo de supervivencia estimado.
-
-
+LA SENTENCIA DEL SUMMARY TIRA ALGO, PERO CUANDO LO CALCULO A MANO DA BAJO VER
+No agregaría nivel de actividad ni sexo
 
 \vspace{2em}  
 
 
--   Modelo 9: Edad y Comorbilidad 
+-   Modelo 9: Edad, Fumador y Comorbilidad 
 $$
-    h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot x_i + \beta_6 \cdot c_i}
+    h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot x_i +
+                             \beta_3 \cdot f_i +
+                             \beta_6 \cdot c_i}
 $$
 
-_Test de Razón de Verosimilitud_
 
-```{r testm9, include = F}
+```{r Modelo9-Edad-Fumador-Comorbilidades, include = F}
 
 # Haciendo el modelo de cox para sexo:
-modc_9 <- coxph(Surv(tiempo, complicacion) ~ edad + comorbilidades, 
+modc_9 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + comorbilidades, 
                ties = "breslow", data = datos)
 summary(modc_9)
 
 
 # Test de verosimilitud:
 # -2*log(reducido) - log(completo)
--2*modc_9$loglik[1] - modc_9$loglik[2]
+-2*(modc_6$loglik[2] - modc_9$loglik[2])
 ```
-
-$$
-TRV = 1061 > 3.84 \Rightarrow  Rechazo \quad H0
-$$
-Con una significación del 5%, puede decirse que la edad y la cantidad de comorbilidades que presentó el paciente afecta al tiempo de supervivencia estimado.
-
+Lo mismo que antes, a mano me da chico, diría de no agregarlo, pero la sentencia me da significativa !!!!
 
 
 \vspace{2em}  
 
--   Modelo 10: Sexo y Fumador 
-$$
-    h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot s_i + \beta_2 \cdot f_i}
-$$
-_Test de Razón de Verosimilitud_
-
-```{r testm10, include = F}
-
-# Haciendo el modelo de cox para sexo:
-modc_10 <- coxph(Surv(tiempo, complicacion) ~ sexo + fumador, 
-               ties = "breslow", data = datos)
-summary(modc_10)
-
-
-# Test de verosimilitud:
-# -2*log(reducido) - log(completo)
--2*modc_10$loglik[1] - modc_10$loglik[2]
-```
-
-$$
-TRV = 1063 > 3.84 \Rightarrow  Rechazo \quad H0
-$$
-Con una significación del 5%, puede decirse que el sexo del paciente y si es fumador activo o no afecta al tiempo de supervivencia estimado.
+****
+Ninguno dio muy significativo, sexo dio un poco significativo, pero tampoco siento que sea taaaan importante ni taaan significativo como para agregarlo VER QUE HACER (si nos quedan 3 variables creo que habría que ver si agregamos las otras o no, y después ver si hay interacción o no)
+****
 
 
 
-\vspace{2em}  
-
--   Modelo 11: Sexo y Actividad 
-$$
-    h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot s_i + 
-                           \beta_3 \cdot a_{1i} +
-                           \beta_4 \cdot a_{2i}}
-$$
-_Test de Razón de Verosimilitud_
-
-```{r testm11, include = F}
-
-# Haciendo el modelo de cox para sexo:
-modc_11 <- coxph(Surv(tiempo, complicacion) ~ sexo + actividad, 
-               ties = "breslow", data = datos)
-summary(modc_11)
-
-
-# Test de verosimilitud:
-# -2*log(reducido) - log(completo)
--2*modc_11$loglik[1] - modc_11$loglik[2]
-```
-
-$$
-TRV = 1075 > 3.84 \Rightarrow  Rechazo \quad H0
-$$
-Con una significación del 5%, puede decirse que el sexo biológico del paciente y el nivel de actividad física que realiza afecta al tiempo de supervivencia estimado.
 
 
 
-\vspace{2em}  
-
--   Modelo 12: Sexo y Comorbilidad
-$$
-    h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot s_i + 
-                           \beta_3 \cdot a_{1i} +
-                           \beta_4 \cdot a_{2i}}
-$$
-
-_Test de Razón de Verosimilitud_
-
-```{r testm12, include = F}
-
-# Haciendo el modelo de cox para sexo:
-modc_12 <- coxph(Surv(tiempo, complicacion) ~ sexo + comorbilidades, 
-               ties = "breslow", data = datos)
-summary(modc_12)
 
 
-# Test de verosimilitud:
-# -2*log(reducido) - log(completo)
--2*modc_12$loglik[1] - modc_12$loglik[2]
-```
+<!-- CREO QUE A PARTIR DE ACÁ NO SERÍA IMPORTANTE. -->
 
-$$
-TRV = 1075 > 3.84 \Rightarrow  Rechazo \quad H0
-$$
-Con una significación del 5%, puede decirse que el sexo y la cantidad de comorbilidades que presentó el paciente afecta al tiempo de supervivencia estimado.
+
+<!-- -   Modelo 10: Edad, Fumador  -->
+<!-- $$ -->
+<!--     h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot s_i + \beta_2 \cdot f_i} -->
+<!-- $$ -->
+
+<!-- ```{r testm10, include = F} -->
+
+<!-- # Haciendo el modelo de cox para sexo: -->
+<!-- modc_10 <- coxph(Surv(tiempo, complicacion) ~ sexo + fumador,  -->
+<!--                ties = "breslow", data = datos) -->
+<!-- summary(modc_10) -->
+
+
+<!-- # Test de verosimilitud: -->
+<!-- # -2*log(reducido) - log(completo) -->
+<!-- -2*(modc_10$loglik[1] - modc_10$loglik[2]) -->
+<!-- ``` -->
+
+<!-- Con una significación del 5%, puede decirse que el sexo del paciente y si es fumador activo o no afecta al tiempo de supervivencia estimado. -->
 
 
 
-<!-- HAY QUE AGREGAR TODAS LAS VARIABLES, TODAS PARECEN SER SIGNIFICATIVAS (tiene sentido) PERO IGUAL VER, CAPAZ NO LO ESTOY HACIENDO BIEN -->
+<!-- \vspace{2em}   -->
+
+<!-- -   Modelo 11: Sexo y Actividad  -->
+<!-- $$ -->
+<!--     h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot s_i +  -->
+<!--                            \beta_3 \cdot a_{1i} + -->
+<!--                            \beta_4 \cdot a_{2i}} -->
+<!-- $$ -->
+
+<!-- ```{r testm11, include = F} -->
+
+<!-- # Haciendo el modelo de cox para sexo: -->
+<!-- modc_11 <- coxph(Surv(tiempo, complicacion) ~ sexo + actividad,  -->
+<!--                ties = "breslow", data = datos) -->
+<!-- summary(modc_11) -->
+
+
+<!-- # Test de verosimilitud: -->
+<!-- # -2*log(reducido) - log(completo) -->
+<!-- -2*(modc_11$loglik[1] - modc_11$loglik[2]) -->
+<!-- ``` -->
+
+
+<!-- Con una significación del 5%, puede decirse que el sexo biológico del paciente y el nivel de actividad física que realiza afecta al tiempo de supervivencia estimado. -->
+
+
+
+<!-- \vspace{2em}   -->
+
+<!-- -   Modelo 12: Sexo y Comorbilidad -->
+<!-- $$ -->
+<!--     h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot s_i +  -->
+<!--                            \beta_3 \cdot a_{1i} + -->
+<!--                            \beta_4 \cdot a_{2i}} -->
+<!-- $$ -->
+
+
+<!-- ```{r testm12, include = F} -->
+
+<!-- # Haciendo el modelo de cox para sexo: -->
+<!-- modc_12 <- coxph(Surv(tiempo, complicacion) ~ sexo + comorbilidades,  -->
+<!--                ties = "breslow", data = datos) -->
+<!-- summary(modc_12) -->
+
+
+<!-- # Test de verosimilitud: -->
+<!-- # -2*log(reducido) - log(completo) -->
+<!-- -2*modc_12$loglik[1] - modc_12$loglik[2] -->
+<!-- ``` -->
+
+
+<!-- Con una significación del 5%, puede decirse que el sexo y la cantidad de comorbilidades que presentó el paciente afecta al tiempo de supervivencia estimado. -->
+
 \newpage
 
 
