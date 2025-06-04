@@ -115,7 +115,15 @@ summary(datos)
 
 # Introducción
 
+Las enfermedades respiratorias crónicas representan un importante problema para la salud debido a su impacto en la calidad de vida de las personas, por lo que se realizó un estudio sobre cierta enfermedad crónica respiratoria por investigadores de la Sociedad Argentina de Neumonología (SAN) centrado en evaluar el tiempo que transcurre desde el diagnóstico hasta la aparición de una complicación severa.
+
+Aprovechando la presencia de profesionales de toda la región, el estudio se desarrolló en la Patagonia argentina, una zona cuyas condiciones climáticas particulares pueden influir en la evolución de estas enfermedades, se relevaron las siguientes características de los pacientes: Edad, Sexo, Hábito tabáquico, nivel de actividad física y presencia de comorbilidades.
+
+\newpage
+
 *Variables*
+
+Se recolectaron las siguientes variables:
 
 -   ID: número de identificación del paciente
 
@@ -145,6 +153,8 @@ summary(datos)
 # Análisis Descriptivo
 <!-- VER DE AGREGAR ALGO ANTES DE TANTO GRÁFICO -->
 
+En principio se realiza un análisis descriptivo de las variables, para ver como es el comportamiento de cada una 
+
 ```{r Edades, echo = F, fig.cap = 'Histograma de las edades de los pacientes al iniciar su seguimiento',out.width='70%', cache = T}
 
 # Histograma:
@@ -173,12 +183,14 @@ mutate(sexo = str_to_title(as.character(sexo))) %>%
   kable(
     caption = "Medidas descriptivas de los pacientes de acuerdo a su sexo biológico",
     col.names = c("Sexo", "n", "Media", "Mediana", "Desvio estandar"),
-    escape = F,
-    label = "Tabla 1") %>%
-  kable_styling(latex_options = "hold_position")
+    escape = F) %>%
+  kable_styling(latex_options = "hold_position",
+                bootstrap_options = c("striped", "hover", "condensed")) %>%
+  column_spec(2, width = "3cm")
 
 
 ```
+
 Puede verse (Tabla \@ref(tab:tabla-sexo)) que más de la mitad de los pacientes son de sexo femenino, y presentan tiempos mayores que sus contrapartes masculinas.
 
 
@@ -223,7 +235,8 @@ datos %>%
     col.names = c("Actividad", "n", "Media", "Mediana", "Desvio estandar"),
     escape = F,
     label = "Tabla 2") %>%
-  kable_styling(latex_options = "hold_position")
+  kable_styling(latex_options = "hold_position",bootstrap_options = c("striped", "hover", "condensed")) %>%
+  column_spec(2, width = "3cm")
 # responsive para que si usamos htlm se ajuste bien creo
 # hold position para que no pase a otra hoja creo
 
@@ -285,7 +298,9 @@ kable(
   col.names = c("Comorbilidades", "n", "Media", "Mediana", "Desvío estándar"),
   escape = FALSE
 ) %>% 
-  kable_styling(latex_options = c("responsive", "hold_position"))
+  kable_styling(latex_options = c("responsive", "hold_position"),
+                bootstrap_options = c("striped", "hover", "condensed")) %>%
+  column_spec(2, width = "3cm")
 
 
 # Sólo hay una persona que presentó 7 comorbilidades así que no se puede calcular el desvío 
@@ -347,7 +362,7 @@ No parece verse diferencia (Figura \@ref(fig:actividadfumadores)) entre los dist
 
 
 
-
+\newpage
 
 
 # Modelo
