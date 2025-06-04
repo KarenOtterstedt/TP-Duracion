@@ -60,6 +60,10 @@ library(tibble)
 library(tidyverse)
 library(dplyr)
 library(knitr)
+library(purrr)
+library(latex2exp)
+library(grid)
+library(gridExtra)
 library(kableExtra)
 library(RColorBrewer) # Paletas
 library(survival)  # Manejo datos de supervivencia 
@@ -150,6 +154,8 @@ Se recolectaron las siguientes variables:
 
 \newpage
 
+
+
 # Análisis Descriptivo
 <!-- VER DE AGREGAR ALGO ANTES DE TANTO GRÁFICO -->
 
@@ -235,7 +241,7 @@ datos %>%
     col.names = c("Actividad", "n", "Media", "Mediana", "Desvio estandar"),
     escape = F,
     label = "Tabla 2") %>%
-  kable_styling(latex_options = "hold_position",bootstrap_options = c("striped", "hover", "condensed")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) %>%
   column_spec(2, width = "3cm")
 # responsive para que si usamos htlm se ajuste bien creo
 # hold position para que no pase a otra hoja creo
