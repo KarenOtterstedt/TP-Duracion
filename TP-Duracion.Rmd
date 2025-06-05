@@ -167,6 +167,7 @@ Para conocer el comportamiento de los datos recolectados, se realiza un análisi
 ggplot(datos, aes(x = edad_c)) +
   geom_histogram(fill = "#92C5DE", color = "black") +
   theme_bw()+
+  xlim = seq(35, 100, length.out = 10)+
   labs(title = 'Histograma de las edades de los pacientes al iniciar su seguimiento',
        y = "Frecuencia",
        x = "Edad")
@@ -174,6 +175,8 @@ ggplot(datos, aes(x = edad_c)) +
 
 En base la Figura \@ref(fig:Edades) se puede ver que la mayoría de los pacientes en el estudio son mayores a 60 años.
 
+
+Con el fin de enriquecer el VER
 ```{r catego-comorbilidades-edades, include = F}
 
 # Categorizando comorbilidades y edades:
