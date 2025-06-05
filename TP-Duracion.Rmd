@@ -386,7 +386,92 @@ $$
 h_i (t) = h_0(t) \cdot e^{\beta_0 + \beta_1 \cdot x_i .....}
 $$
 
+# modelo para hacer el test
+```{r}
 
+modc_0 <- coxph(Surv(tiempo, complicacion) ~ 1, ties = "breslow", data = datos)
+modc_1 <- coxph(Surv(tiempo, complicacion) ~ edad, ties = "breslow", data = datos)
+modc_2 <- coxph(Surv(tiempo, complicacion) ~ sexo, ties = "breslow", data = datos)
+modc_3 <- coxph(Surv(tiempo, complicacion) ~ fumador, ties = "breslow", data = datos)
+modc_4 <- coxph(Surv(tiempo, complicacion) ~ actividad, ties = "breslow", data = datos)
+modc_5 <- coxph(Surv(tiempo, complicacion) ~ comorbilidades, data = datos, ties = "breslow")
+modc_6 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador, ties = "breslow", data = datos)
+modc_7 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + sexo, ties = "breslow", data = datos)
+modc_8 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + actividad, ties = "breslow", data = datos)
+modc_9 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + comorbilidades, ties = "breslow", data = datos)
+
+
+```
+
+# modelo para graficar
+```{r}
+
+mod_0 <- survfit(Surv(tiempo, complicacion) ~ 1, data = datos)
+summary(mod_0)
+mod_1 <- survfit(Surv(tiempo, complicacion) ~ edad, data = datos)
+summary(mod_1)
+mod_2 <- survfit(Surv(tiempo, complicacion) ~ sexo, data = datos)
+summary(mod_2)
+mod_3 <- survfit(Surv(tiempo, complicacion) ~ fumador, data = datos)
+summary(mod_3)
+mod_4 <- survfit(Surv(tiempo, complicacion) ~ actividad, data = datos)
+summary(mod_4)
+mod_5 <- survfit(Surv(tiempo, complicacion) ~ comorbilidades, data = datos)
+summary(mod_5)
+
+
+
+```
+
+
+# graficos
+
+```{r}
+
+ggsurvplot(fit = mod_0, data = datos,
+           censor.shape = 20,
+           xlab = "Tiempo (en meses)",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend = "none",
+           legend.title = "Gr")
+
+ggsurvplot(fit = mod_2, data = datos,
+           censor.shape = 20,
+           xlab = "Meses",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend.labs = c("Femenino", "Masculino"),
+           legend.title = "")
+ggsurvplot(fit = mod_3, data = datos,
+           censor.shape = 20,
+           xlab = "Meses",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend.labs = c("No Fumador", "Fumador"),
+           legend.title = "")
+
+ggsurvplot(fit = mod_4, data = datos,
+           censor.shape = 20,
+           xlab = "Meses",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend.labs = c("Alta", "Baja", "Moderada"),
+           legend.title = "")
+
+
+
+```
+
+
+# Test
+
+```{r}
+modelos <- as.data.frame(rbind(-2*modc_1$loglik[1], -2*modc_1$loglik[2], -2*modc_2$loglik[2], -2*modc_3$loglik[2], -2*modc_4$loglik[2], -2*modc_5$loglik[2], -2*modc_6$loglik[2], -2*modc_7$loglik[2], -2*modc_8$loglik[2], -2*modc_9$loglik[2]))
+
+colnames(modelos) <- "-2 log (L)"
+
+row.names(modelos) <- c('none', 'Edad', 'Sexo', 'Fumador', 'Actividad', 'Comorbilidades', 'Edad + Fumador', 'Edad + Fumador + Sexo', 'Edad + Fumador + Actividad', 'Edad + Fumador + Comorbilidades')
+
+modelos
+
+```
 
 
 \newpage
@@ -418,9 +503,6 @@ $$
 
 ```{r Modelo0, include = F}
 # Modelo para graficar
-mod_0 <- survfit(Surv(tiempo, complicacion) ~ 1,
-                 data = datos)
-summary(mod_0)
 
 # Modelo para hacer el test:
 modc_0 <- coxph(Surv(tiempo, complicacion) ~ 1,
@@ -466,6 +548,10 @@ summary(mod_1)
 #            legend.title = "")
 
 ```
+
+
+
+
 
 ```{r testm1, include = F}
 
@@ -513,6 +599,7 @@ ggsurvplot(fit = mod_2, data = datos,
 ```
 Se espera que el tiempo de supervivencia de las mujeres sea mayor que la de los hombres en los primeros 4 años, pero después los tiempos de supervivencia se acercan a los mismos valores. Incluso las pacientes de sexo femenino llegan a tener menores tiempos de supervivencia que los masculinos.
 
+
 ```{r testm2, include = F}
 
 # Haciendo el modelo de cox para sexo:
@@ -545,6 +632,7 @@ $$
 h_i(t) = h_0 (t) \cdot e^{\beta_3 \cdot f_i} \quad i = \overline{1,110}
 $$
 
+
 ```{r supervivencia3, include = F}
 # Modelo para graficar
 mod_3 <- survfit(Surv(tiempo, complicacion) ~ fumador,
@@ -564,6 +652,8 @@ ggsurvplot(fit = mod_3, data = datos,
 
 ```
 Los pacientes que no son fumadores muestran tiempos de supervivencia más altos que aquellos que sí fuman activamente.
+
+
 
 
 ```{r testm3, include = F}
@@ -602,6 +692,7 @@ h_i(t) = h_0 (t) \cdot e^{\beta_4 \cdot a_{1i} +
                           \beta_5 \cdot a_{2i}} \quad i = \overline{1,110}
 $$
 
+
 ```{r supervivencia4, include = F}
 # Modelo para graficar
 mod_4 <- survfit(Surv(tiempo, complicacion) ~ actividad,
@@ -622,6 +713,7 @@ ggsurvplot(fit = mod_4, data = datos,
 
 ```
 No parece haber grandes diferencias en los tiempos de supervivencia de los pacientes que participaron del estudio que realizaban distintos niveles de actividad física.
+
 
 ```{r testm4, include = F}
 
@@ -689,6 +781,7 @@ La cantidad de comorbilidades no parece afectar el tiempo de supervivencia de lo
 \vspace{4em}
 
 Dado que la Edad del paciente y si es Fumador activo o no, resultan significativas, resta analizar si ambos aportan en presencia del otro:
+
 
 - Modelo 6: Edad y Fumador
 El modelo de dos variables resultante es el siguiente:
