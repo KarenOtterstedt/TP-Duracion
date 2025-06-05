@@ -16,7 +16,7 @@ output:
 ---
 
 
-{=tex}
+```{=tex}
 \begin{titlepage}
 \centering
 \vspace*{4cm} % espacio superior
@@ -30,6 +30,8 @@ output:
 \vfill
 
 \end{titlepage}
+```
+
 
 \newpage
 
@@ -138,6 +140,39 @@ summary(datos)
 
 ```
 
+```{r catego-comorbilidades-edades, include = F}
+
+# Categorizando comorbilidades y edades:
+# Comorbilidades: Pocas (<=2), Moderadas (3-4), Muchas (>4)
+# Edades: 40-60, 60-70, >70
+
+datos <- datos %>% 
+  # Ordenamos actividad en Alta, Moderada, Baja
+  mutate(actividad = str_to_title(as.character(actividad)), 
+        actividad = factor(actividad,
+                       levels = c("Alta", "Moderada", "Baja"))) %>%
+  # Categorizamos comorbilidades en una nueva columna:
+  mutate(com_c = case_when(
+    comorbilidades <= 2 ~ "pocas",
+    (comorbilidades == 3 | comorbilidades == 4) ~ "moderadas",
+    T ~ "muchas")) %>% 
+  # Para que aparezcan con mayuscula en la primera y tengan orden:
+   mutate(com_c = str_to_title(as.character(com_c)),
+    com_c = factor(com_c,
+                  levels = c("Pocas", "Moderadas", "Muchas"))) %>%
+  mutate(edad_c = case_when(
+    (edad < 60) ~ 1,
+    (edad < 70) ~ 2,
+    T ~ 3))
+  # Ordenando también edades:
+  # mutate(edad_c = factor(edad_c, 
+  #                        levels = c("40 - 60", "60 - 70", "> 70")))
+
+datos$edad_c <- as.factor(datos$edad_c)
+levels(datos$edad_c) <- c("40 - 60", "60 - 70", "Más de 70")
+``` 
+
+
 \newpage
 
 # Introducción
@@ -181,41 +216,110 @@ Se recolectaron las siguientes variables:
 
 # Análisis Descriptivo
 
+```{r supervivencia-modelos, include = F, echo=FALSE}
+# Modelos para graficar:
+
+# Modelo Nulo
+mod_0 <- survfit(Surv(tiempo, complicacion) ~ 1, data = datos)
+summary(mod_0)
+
+# Modelo con edad:
+mod_1 <- survfit(Surv(tiempo, complicacion) ~ edad_c, data = datos)
+summary(mod_1)
+
+# Modelo con sexo:
+mod_2 <- survfit(Surv(tiempo, complicacion) ~ sexo, data = datos)
+summary(mod_2)
+
+# Modelo con fumador:
+mod_3 <- survfit(Surv(tiempo, complicacion) ~ fumador, 
+                 data = datos)
+summary(mod_3)
+
+# Modelo con actividad:
+mod_4 <- survfit(Surv(tiempo, complicacion) ~ actividad, 
+                 data = datos)
+summary(mod_4)
+
+# Modelo con comorbilidades
+mod_5 <- survfit(Surv(tiempo, complicacion) ~ com_c, 
+                 data = datos)
+summary(mod_5)
+
+```
+
+
 ## *Edad*
 Para conocer el comportamiento de los datos recolectados, sobre la variable edad se realiza una categorización 
 
 
+```{r tabla-sexo, echo = F}
+
+datos %>% 
+  group_by(edad_c) %>% 
+  # Para que ponga las primeras letras en mayúscula:
+mutate(sexo = str_to_title(as.character(edad_c))) %>% 
+  summarise(n = n(),
+            media = mean(tiempo),
+            mediana = median(tiempo),
+            sd = sd(tiempo)) %>% 
+    mutate(
+    across(where(is.numeric), # Para que sólo use 2 decimales
+           ~round(.x, 2))) %>%
+  kable(
+    caption = "Medidas descriptivas de los pacientes de acuerdo a su edad",
+    col.names = c("Edad", "n", "Media", "Mediana", "Desvio estandar"),
+    escape = F) %>%
+  kable_styling(latex_options = "hold_position",
+                bootstrap_options = c("striped", "hover", "condensed")) %>%
+  column_spec(2, width = "3cm")
+
+
+```
+
+```{r, echo=FALSE}
+graf_edad_box <- datos %>% 
+  group_by(edad_c) %>% 
+  ggplot(aes(x = edad_c, y = tiempo, fill = "pink3")) + 
+  geom_boxplot() +
+  labs (title ='Grafico : tiempos de supervivencia según sexo',
+        x = "Edad",
+        y = "Tiempo (en meses)") +
+  theme_bw() +
+  theme(legend.position = "none") 
+
+```
+
+```{r test-tendencia-edadc,echo = F}
+
+titulo1 <- str_wrap("Figura : Probabilidad de supervivencia estimada según edades de los pacientes", width = 40)
+
+graf_edad_km <- ggsurvplot(fit = mod_1, data = datos,
+           title = titulo1,
+        #   palette = c("coral", "lightblue", "lightgreen"), 
+           conf.int = F, 
+           censor.shape = 20,
+           xlab = "Tiempo (en meses)", 
+           ylab = "Probabilidad de supervivencia estimada", 
+           pval = T,
+           pval.method = T,
+           pval.coord = c(45, .8),
+           pval.method.coord = c(45, 1),
+           test.for.trend = T,
+           legend.labs = c("40 a 60 años", 
+                          "60 a 70 años",
+                          "Más de 70 años"),
+           legend.title="")
+```
+
+```{r}
+grid.arrange(graf_edad_box, graf_edad_km$plot, ncol = 2)
+```
+
 
 Con el fin de enriquecer el VER
-```{r catego-comorbilidades-edades, include = F}
 
-# Categorizando comorbilidades y edades:
-# Comorbilidades: Pocas (<=2), Moderadas (3-4), Muchas (>4)
-# Edades: 40-60, 60-70, >70
-
-datos <- datos %>% 
-  # Ordenamos actividad en Alta, Moderada, Baja
-  mutate(actividad = str_to_title(as.character(actividad)), 
-        actividad = factor(actividad,
-                       levels = c("Alta", "Moderada", "Baja"))) %>%
-  # Categorizamos comorbilidades en una nueva columna:
-  mutate(com_c = case_when(
-    comorbilidades <= 2 ~ "pocas",
-    (comorbilidades == 3 | comorbilidades == 4) ~ "moderadas",
-    T ~ "muchas")) %>% 
-  # Para que aparezcan con mayuscula en la primera y tengan orden:
-   mutate(com_c = str_to_title(as.character(com_c)),
-    com_c = factor(com_c,
-                  levels = c("Pocas", "Moderadas", "Muchas"))) %>%
-  mutate(edad_c = case_when(
-    (edad < 60) ~ 1,
-    (edad < 70) ~ 2,
-    T ~ 3))
-  # Ordenando también edades:
-  # mutate(edad_c = factor(edad_c, 
-  #                        levels = c("40 - 60", "60 - 70", "> 70")))
-``` 
-
+## *Sexo*
 
 ```{r tabla-sexo, echo = F}
 
@@ -244,7 +348,7 @@ mutate(sexo = str_to_title(as.character(sexo))) %>%
 ```{r boxplot-sexo, echo  = F ,out.width='70%', cache = T}
 
 # Boxplot sexo:
-datos %>% 
+graf_sexo_box <- datos %>% 
   group_by(sexo) %>% 
   ggplot(aes(x = sexo, y = tiempo, fill = "pink3")) + 
   geom_boxplot() +
@@ -255,13 +359,33 @@ datos %>%
   theme(legend.position = "none") 
 
 ```
+
+```{r grafsup2, echo = F, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier según sexo', out.width='80%', cache = T}
+
+graf_sexo_km<- ggsurvplot(fit = mod_2, data = datos,
+           censor.shape = 20,
+           xlab = "Meses",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend.labs = c("Femenino", "Masculino"),
+           legend.title = "")
+
+```
+
+```{r}
+grid.arrange(graf_sexo_box, graf_sexo_km$plot, ncol = 2)
+```
+
+
+
 Puede verse en la Tabla \@ref(tab:tabla-sexo) que más de la mitad de los pacientes son de sexo femenino, y presentan tiempos mayores que sus contrapartes masculinas. 
 
+
+## *Fumadores*
 
 ```{r graf-fumadores, echo  = F ,out.width='70%', cache = T}
 
 # Boxplot fumadores:
-datos %>% 
+graf_fumadores_box <- datos %>% 
   group_by(fumador) %>% 
   ggplot(aes(x = fumador, y = tiempo, fill = fumador)) + 
   geom_boxplot() +
@@ -275,7 +399,26 @@ datos %>%
 
 ```
 
+```{r grafsup3, echo = F, fig.cap = 'Supervivencia estimada por Kaplan-Meier según si los pacientes son fumadores activos o no',out.width='70%', cache = T}
+
+graf_fumadores_km <- ggsurvplot(fit = mod_3, data = datos,
+           censor.shape = 20,
+           xlab = "Meses",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend.labs = c("No Fumador", "Fumador"),
+           legend.title = "")
+
+```
+
+```{r}
+grid.arrange(graf_fumadores_box, graf_fumadores_km$plot, ncol = 2)
+```
+
+
 A pesar de presentar algunos outliers, se puede ver en la Figura \@ref(fig:graf-fumadores) que aquellos pacientes que padecieron cierta enfermedad crónica respiratoria y fuman presentaron menores tiempos de supervivencia que sus contrapartes que no fuman. Los pacientes que fuman en promedio presentan tiempos de supervivencia menores frente aquellos que no son fumadores activos.
+
+## *Actividad*
+
 
 ```{r tabla-actividad, echo = FALSE, fig.cap = 'Nivel de actividad física de los pacientes', out.width='70%', cache = TRUE}
 
@@ -310,16 +453,51 @@ datos %>%
 
 ```
 
+```{r, echo=FALSE}
+# Boxplot actividad:
+graf_actividad_box <- datos %>% 
+  group_by(actividad) %>% 
+  ggplot(aes(x = actividad, y = tiempo, fill = actividad)) + 
+  geom_boxplot() +
+  scale_fill_manual(values = c("#92C5DE", "#F4A582", "red"))+
+  labs (title ='Niveles de actividad',
+        x = "Nivel de actividad",
+        y = "Tiempo (en meses)") +
+  scale_x_discrete(label = c("Alta", "Baja", "Moderada")) +
+  theme_bw() +
+  theme(legend.position = "none") 
+
+```
+
+
+```{r grafsup4, echo = F, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier de acuerdo a los niveles de actividad física', out.width='70%', cache = T}
+
+# ORDENAR ALTA MODERADA BAJA O BAJA MODERADA ALTA
+graf_actividad_km <- ggsurvplot(fit = mod_4, data = datos,
+           censor.shape = 20,
+           xlab = "Meses",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend.labs = c("Alta", "Baja", "Moderada"),
+           legend.title = "")
+
+```
+
+```{r}
+grid.arrange(graf_actividad_box, graf_actividad_km$plot, ncol = 2)
+```
+
 
 En base a la \@ref(tab:tabla-actividad) pocas personas de las que participaron en el estudio, realizan un nivel de actividad física alto, sin embargo, no hay
 gran diferencia entre los tiempos medios de las personas que realizan
 actividad de niveles moderada y baja. A pesar de que parece haber tiempos de supervivencia mayores para los pacientes que realizan altas cantidades de actividad física, esto puede deberse al número de personas que forman parte de este grupo.
 
 
+## *Comorbilidades*
+
 Algunas cantidades de comorbilidades fueron poco frecuentes entre los pacientes, sólo 3 de los 110 no tuvieron, un paciente presentó 7, otros 3 presentaron 6, entre otros. Por lo que se agruparon grupos de pacientes de acuerdo a las $"Cantidades \ de  \ comorbilidades"$ que pasaron, en tres niveles: pocas (0-2 comorbilidades), moderadas (3-4 comorbilidades) y muchas ( > 5 comorbilidades). 
 
 ```{r boxplot-com_c, echo = F, cache = T}
-datos %>% 
+graf_comor_box <- datos %>% 
   group_by(com_c) %>% 
   ggplot(aes(x = com_c, y = tiempo, fill = "orange3")) + 
   geom_boxplot() +
@@ -331,6 +509,7 @@ datos %>%
   theme(legend.position = "none") 
 
 ```
+
 No parece haber muchas diferencias en los tiempos de supervivencia de los pacientes que tuvieron pocas comorbilidades (2 o menos) en comparación con aquellos que presentaron cantidades moderadas (3 o 4). 
 
 
@@ -360,60 +539,25 @@ kable(
 
 ```
 
+```{r Supervivencia_M5, out.width='70%', echo = F}
+
+graf_comor_km <- ggsurvplot(fit = mod_5, data = datos,
+           censor.shape = 20,
+           xlab = "Meses",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend.labs = levels(datos$com_c),
+           legend.title = "Comorbilidades")
+
+
+
+```
+
+```{r}
+grid.arrange(graf_comor_box, graf_comor_km$plot, ncol = 2)
+```
+
+
 En la Tabla \@ref(tab:tabla-comorbilidad) puede verse que mucha gente presentó pocas comorbilidades, y poca gente que presentó muchas. El tiempo medio de las personas que sufrieron una cantidad moderada de comorbilidades es mayor que los grupos restantes, pudiendo verse que le siguen los pacientes que sufrieron pocas, y, por último, con valores menores aquellos que presentaron muchas.
-
-
-```{r sexoactividad,out.width='90%', echo = F, cache = T}
-
-# Intento de boxplot sexo y actividad física
-datos %>% 
-  mutate(
-    sexo = str_to_title(as.character(sexo)),
-    sexo = factor(sexo,
-                  levels = c("Masculino", "Femenino")),
-        actividad = str_to_title(as.character(actividad)),
-    actividad = factor(actividad,
-         levels = c("Baja", "Moderada", "Alta"))) %>% 
-  group_by(sexo, actividad) %>%
-  ggplot(aes(x = sexo, y = tiempo, fill = actividad))+
-  geom_boxplot()+
-  scale_fill_manual(values = c("#92C5DE", "brown3","#F4A582"))  +
-  labs(title = "Actividad de acuerdo al sexo",
-       x = "Sexo",
-       y = "Tiempo (en meses)",
-       fill = "Actividad") +
-  theme_bw() 
-
-# le cambie el color porque la verdad no los diferenciaba, pero despues ponele el color que tenia
-```
-
-En la Figura \@ref(fig:sexoactividad) puede verse que hay una gran dispersión entre las mujeres que realizan
-bajo nivel de actividad física en los tiempos de supervivencia, a
-diferencia de los hombres, que presentan tiempos mucho más concentrados.
-Los pacientes masculinos que participaron del estudio y realizaban bajos niveles de actividad física no sobrevivieron los dos años, mientras que más del 25% de las mujeres que realizaban actividad con ese mismo nivel, sobrevivieron más de dos años de haberse iniciado en este estudio.
-
-```{r actividadfumadores, echo = F, out.width='90%', cache = T}
-
-# Intento de actividad física y fumadores
-datos %>% 
-  mutate(
-        actividad = str_to_title(as.character(actividad)),
-    actividad = factor(actividad,
-         levels = c("Baja", "Moderada", "Alta"))) %>% 
-  group_by(fumador, actividad) %>%
-  ggplot(aes(x = fumador, y = tiempo, fill = actividad))+
-  geom_boxplot()+
-  scale_fill_manual(values = c("#92C5DE", "#C2A5CF","#F4A582"))  +
-  labs(title = 'Tiempo de los pacientes teniendo en cuenta si son fumadores activos o no y el nivel de actividad física',
-       x = "",
-       y = "Tiempo (en meses)",
-       fill = "Actividad") +
-  scale_x_discrete(label = c("No Fumador", "Fumador")) +
-  theme_bw() 
-
-```
-
-No parece verse diferencia Figura \@ref(fig:actividadfumadores) entre los distintos niveles de actividad física entre los pacientes que fuman. Así como tampoco parece presentarse diferencias en aquellos que no fuman, es decir, en los pacientes no fumadores, realizar actividad física con mayor o menor frecuencia no parece influir en el tiempo de supervivencia.
 
 
 
@@ -488,37 +632,6 @@ Los tiempos de supervivencia de los pacientes parecen ser significativamente dif
 
 
 
-```{r supervivencia-modelos, include = F}
-# Modelos para graficar:
-
-# Modelo Nulo
-mod_0 <- survfit(Surv(tiempo, complicacion) ~ 1, data = datos)
-summary(mod_0)
-
-# Modelo con edad:
-mod_1 <- survfit(Surv(tiempo, complicacion) ~ edad_c, data = datos)
-summary(mod_1)
-
-# Modelo con sexo:
-mod_2 <- survfit(Surv(tiempo, complicacion) ~ sexo, data = datos)
-summary(mod_2)
-
-# Modelo con fumador:
-mod_3 <- survfit(Surv(tiempo, complicacion) ~ fumador, 
-                 data = datos)
-summary(mod_3)
-
-# Modelo con actividad:
-mod_4 <- survfit(Surv(tiempo, complicacion) ~ actividad, 
-                 data = datos)
-summary(mod_4)
-
-# Modelo con comorbilidades
-mod_5 <- survfit(Surv(tiempo, complicacion) ~ com_c, 
-                 data = datos)
-summary(mod_5)
-
-```
 
 <!-- Test de tendencia para variables con ordenamiento -->
 
@@ -533,69 +646,8 @@ $$
 <!-- Para actividad y para comorbilidades -->
 
 
-```{r test-tendencia-edadc,echo = F}
-
-titulo1 <- str_wrap("Figura : Probabilidad de supervivencia estimada según edades de los pacientes", width = 40)
-
-ggsurvplot(fit = mod_1, data = datos,
-           title = titulo1,
-        #   palette = c("coral", "lightblue", "lightgreen"), 
-           conf.int = F, 
-           censor.shape = 20,
-           xlab = "Tiempo (en meses)", 
-           ylab = "Probabilidad de supervivencia estimada", 
-           pval = T,
-           pval.method = T,
-           pval.coord = c(45, .8),
-           pval.method.coord = c(45, 1),
-           test.for.trend = T,
-           legend.labs = c("40 a 60 años", 
-                          "60 a 70 años",
-                          "Más de 70 años"),
-           legend.title="")
-```
 Hay diferencias significativas en el tiempo de supervivencia de los pacientes que presentaron de 40 a 60 años, 60 a 70, y mayores de 70.
 
-```{r test-tendencia-actividad, echo = F}
-# Actividad:
-titulo2 <- str_wrap("Figura : Probabilidad de supervivencia estimada según nivel de actividad física", width = 40)
-
-ggsurvplot(fit = mod_4, data = datos,
-           title = titulo2,
-        #   palette = c("coral", "lightblue", "lightgreen"), 
-           conf.int = F, 
-           censor.shape = 20,
-           xlab = "Meses", 
-           ylab = "Probabilidad de supervivencia estimada", 
-           pval = T,
-           pval.method = T,
-           pval.coord = c(45, .8),
-           pval.method.coord = c(45, 1),
-           test.for.trend = T,
-           legend.labs = c("Alto", 
-                           "Moderada",
-                           "Baja"),
-           legend.title="")
-
-ggsurvplot(fit = mod_5, data = datos,
-           #title = titulo,
-        #   palette = c("coral", "lightblue", "lightgreen"), 
-           conf.int = F, 
-           censor.shape = 20,
-           xlab = "Tiempo (en meses)", 
-           ylab = "Probabilidad de supervivencia estimada", 
-           pval = T,
-           pval.method = T,
-           pval.coord = c(45, 0.8),
-           pval.method.coord = c(45, 1),
-           test.for.trend = T,
-           legend.labs = c("Pocas", 
-                           "Moderadas",
-                           "Muchas"),
-           legend.title="")
-
-# ggpubr::ggpar(fig_10, font.legend = list(size = 12, color = "black", face = "bold"))
-```
 
 
 ```{r test-tendencia-comorbilidades,echo = F}
@@ -897,16 +949,6 @@ summary(mod_2)
 ```
 
 
-```{r grafsup2, echo = F, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier según sexo', out.width='80%', cache = T}
-
-ggsurvplot(fit = mod_2, data = datos,
-           censor.shape = 20,
-           xlab = "Meses",
-           ylab = "Probabilidad de Supervivencia estimada",
-           legend.labs = c("Femenino", "Masculino"),
-           legend.title = "")
-
-```
 Se espera que el tiempo de supervivencia de las mujeres sea mayor que la de los hombres en los primeros 4 años, pero después los tiempos de supervivencia se acercan a los mismos valores. Incluso las pacientes de sexo femenino llegan a tener menores tiempos de supervivencia que los masculinos.
 
 
@@ -952,16 +994,6 @@ summary(mod_3)
 ```
 
 
-```{r grafsup3, echo = F, fig.cap = 'Supervivencia estimada por Kaplan-Meier según si los pacientes son fumadores activos o no',out.width='70%', cache = T}
-
-ggsurvplot(fit = mod_3, data = datos,
-           censor.shape = 20,
-           xlab = "Meses",
-           ylab = "Probabilidad de Supervivencia estimada",
-           legend.labs = c("No Fumador", "Fumador"),
-           legend.title = "")
-
-```
 Los pacientes que no son fumadores muestran tiempos de supervivencia más altos que aquellos que sí fuman activamente.
 
 
@@ -1012,17 +1044,6 @@ summary(mod_4)
 ```
 
 
-```{r grafsup4, echo = F, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier de acuerdo a los niveles de actividad física', out.width='70%', cache = T}
-
-# ORDENAR ALTA MODERADA BAJA O BAJA MODERADA ALTA
-ggsurvplot(fit = mod_4, data = datos,
-           censor.shape = 20,
-           xlab = "Meses",
-           ylab = "Probabilidad de Supervivencia estimada",
-           legend.labs = c("Alta", "Baja", "Moderada"),
-           legend.title = "")
-
-```
 No parece haber grandes diferencias en los tiempos de supervivencia de los pacientes que participaron del estudio que realizaban distintos niveles de actividad física.
 
 
@@ -1075,18 +1096,6 @@ summary(modc_5)
 ```
 
 
-```{r Supervivencia_M5, out.width='70%', echo = F}
-
-ggsurvplot(fit = mod_5, data = datos,
-           censor.shape = 20,
-           xlab = "Meses",
-           ylab = "Probabilidad de Supervivencia estimada",
-           legend.labs = levels(datos$com_c),
-           legend.title = "Comorbilidades")
-
-
-
-```
 La cantidad de comorbilidades no parece afectar el tiempo de supervivencia de los pacientes $(p > 0.05)$
 
 \vspace{4em}
