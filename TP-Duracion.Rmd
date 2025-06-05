@@ -161,13 +161,15 @@ Se recolectaron las siguientes variables:
 
 En principio se realiza un análisis descriptivo de las variables, para ver como es el comportamiento de cada una 
 
-```{r Edades, echo = F, fig.cap = 'Histograma de las edades de los pacientes al iniciar su seguimiento',out.width='70%', cache = T}
+```{r Edades, echo = F,out.width='70%', cache = T}
 
 # Histograma:
 ggplot(datos, aes(x = edad)) +
   geom_histogram(fill = "#92C5DE", color = "black") +
   theme_bw()+
-  labs(y = "Frecuencia", x = "Edad")
+  labs(title = 'Histograma de las edades de los pacientes al iniciar su seguimiento',
+       y = "Frecuencia",
+       x = "Edad")
 ```
 
 En base la Figura \@ref(fig:Edades) se puede ver que la mayoría de los pacientes en el estudio son mayores a 60 años.
@@ -197,10 +199,10 @@ mutate(sexo = str_to_title(as.character(sexo))) %>%
 
 ```
 
-Puede verse (Tabla \@ref(tab:tabla-sexo)) que más de la mitad de los pacientes son de sexo femenino, y presentan tiempos mayores que sus contrapartes masculinas.
+Puede verse en la Tabla \@ref(tab:tabla-sexo) que más de la mitad de los pacientes son de sexo femenino, y presentan tiempos mayores que sus contrapartes masculinas.
 
 
-```{r graf-fumadores, echo  = F, fig.cap='No Fumadores vs Fumadores',out.width='70%', cache = T}
+```{r graf-fumadores, echo  = F ,out.width='70%', cache = T}
 
 # Boxplot fumadores:
 datos %>% 
@@ -208,7 +210,9 @@ datos %>%
   ggplot(aes(x = fumador, y = tiempo, fill = fumador)) + 
   geom_boxplot() +
   scale_fill_manual(values = c("#92C5DE", "#F4A582"))+
-  labs (x = "Fumador", y = "Tiempo (en meses)") +
+  labs (title ='No Fumadores vs Fumadores',
+        x = "Fumador",
+        y = "Tiempo (en meses)") +
   scale_x_discrete(label = c("No", "Si")) +
   theme_bw() +
   theme(legend.position = "none") 
@@ -240,11 +244,13 @@ datos %>%
     caption = "Medidas descriptivas de los pacientes de acuerdo a su nivel de actividad fisica",
     col.names = c("Actividad", "n", "Media", "Mediana", "Desvio estandar"),
     escape = F,
-    label = "Tabla 2") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) %>%
-  column_spec(2, width = "3cm")
+      booktabs = TRUE,
+      position = "H",
+      caption.placement = "bottom") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) 
 # responsive para que si usamos htlm se ajuste bien creo
 # hold position para que no pase a otra hoja creo
+
 
 ```
 
@@ -316,7 +322,7 @@ kable(
 En la Tabla \@ref(tab:tabla-comorbilidad) puede verse que mucha gente presentó pocas comorbilidades, y poca gente que presentó muchas. El tiempo medio de las personas que sufrieron una cantidad moderada de comorbilidades es mayor que los grupos restantes, pudiendo verse que le siguen los pacientes que sufrieron pocas, y, por último, con valores menores aquellos que presentaron muchas.
 
 
-```{r sexoactividad,fig.cap="Actividad de acuerdo al sexo",out.width='90%', echo = F, cache = T}
+```{r sexoactividad,out.width='90%', echo = F, cache = T}
 
 # Intento de boxplot sexo y actividad física
 datos %>% 
@@ -331,7 +337,8 @@ datos %>%
   ggplot(aes(x = sexo, y = tiempo, fill = actividad))+
   geom_boxplot()+
   scale_fill_manual(values = c("#92C5DE", "brown3","#F4A582"))  +
-  labs(x = "Sexo",
+  labs(title = "Actividad de acuerdo al sexo",
+       x = "Sexo",
        y = "Tiempo (en meses)",
        fill = "Actividad") +
   theme_bw() 
@@ -344,7 +351,7 @@ bajo nivel de actividad física en los tiempos de supervivencia, a
 diferencia de los hombres, que presentan tiempos mucho más concentrados.
 Los pacientes masculinos que participaron del estudio y realizaban bajos niveles de actividad física no sobrevivieron los dos años, mientras que más del 25% de las mujeres que realizaban actividad con ese mismo nivel, sobrevivieron más de dos años de haberse iniciado en este estudio.
 
-```{r actividadfumadores, echo = F, fig.cap = 'Tiempo de los pacientes teniendo en cuenta si son fumadores activos o no y el nivel de actividad física', out.width='90%', cache = T}
+```{r actividadfumadores, echo = F, out.width='90%', cache = T}
 
 # Intento de actividad física y fumadores
 datos %>% 
@@ -356,7 +363,8 @@ datos %>%
   ggplot(aes(x = fumador, y = tiempo, fill = actividad))+
   geom_boxplot()+
   scale_fill_manual(values = c("#92C5DE", "#C2A5CF","#F4A582"))  +
-  labs(x = "",
+  labs(title = 'Tiempo de los pacientes teniendo en cuenta si son fumadores activos o no y el nivel de actividad física',
+       x = "",
        y = "Tiempo (en meses)",
        fill = "Actividad") +
   scale_x_discrete(label = c("No Fumador", "Fumador")) +
@@ -364,7 +372,7 @@ datos %>%
 
 ```
 
-No parece verse diferencia (Figura \@ref(fig:actividadfumadores)) entre los distintos niveles de actividad física entre los pacientes que fuman. Así como tampoco parece presentarse diferencias en aquellos que no fuman, es decir, en los pacientes no fumadores, realizar actividad física con mayor o menor frecuencia no parece influir en el tiempo de supervivencia.
+No parece verse diferencia Figura \@ref(fig:actividadfumadores) entre los distintos niveles de actividad física entre los pacientes que fuman. Así como tampoco parece presentarse diferencias en aquellos que no fuman, es decir, en los pacientes no fumadores, realizar actividad física con mayor o menor frecuencia no parece influir en el tiempo de supervivencia.
 
 
 
@@ -377,6 +385,9 @@ Se analiza el mejor modelo
 $$
 h_i (t) = h_0(t) \cdot e^{\beta_0 + \beta_1 \cdot x_i .....}
 $$
+
+
+
 
 \newpage
 
