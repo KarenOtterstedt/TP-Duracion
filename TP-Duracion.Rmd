@@ -23,10 +23,11 @@ output:
 # ⌂ Referenciar tablas
 # ⌂ Centrar captions (de tablas y figuras)
 # ⌂ Mejorar captions
-# !(⌂) VER SI HAY QUE PONER TITULOS O NO EN LOS GRAFICOS
 # !(⌂) Terminar de armar modelos y elegir uno
 # !(⌂) RH, IC, etc
 # !(⌂) Conclusiones
+# (⌂) PONEMOS CUANTILES??
+#       quantile(km, quantiles = c(0.25, 0.50, 0.75), conf.int = 0.95)$quantile
 
 
 
@@ -61,6 +62,7 @@ library(tidyverse)
 library(dplyr)
 library(knitr)
 library(purrr)
+# install.packages("latex2exp")
 library(latex2exp)
 library(grid)
 library(gridExtra)
@@ -199,7 +201,21 @@ mutate(sexo = str_to_title(as.character(sexo))) %>%
 
 ```
 
-Puede verse en la Tabla \@ref(tab:tabla-sexo) que más de la mitad de los pacientes son de sexo femenino, y presentan tiempos mayores que sus contrapartes masculinas.
+```{r boxplot-sexo, echo  = F ,out.width='70%', cache = T}
+
+# Boxplot sexo:
+datos %>% 
+  group_by(sexo) %>% 
+  ggplot(aes(x = sexo, y = tiempo, fill = "pink3")) + 
+  geom_boxplot() +
+  labs (title ='Grafico : tiempos de supervivencia según sexo',
+        x = "Sexo",
+        y = "Tiempo (en meses)") +
+  theme_bw() +
+  theme(legend.position = "none") 
+
+```
+Puede verse en la Tabla \@ref(tab:tabla-sexo) que más de la mitad de los pacientes son de sexo femenino, y presentan tiempos mayores que sus contrapartes masculinas. 
 
 
 ```{r graf-fumadores, echo  = F ,out.width='70%', cache = T}
@@ -255,29 +271,19 @@ datos %>%
 ```
 
 
-En base a la \@ref(tab:tabla-actividad) pocas personas de las que participaron en el
-estudio, realizan un nivel de actividad física alto, sin embargo, no hay
+En base a la \@ref(tab:tabla-actividad) pocas personas de las que participaron en el estudio, realizan un nivel de actividad física alto, sin embargo, no hay
 gran diferencia entre los tiempos medios de las personas que realizan
-actividad de niveles moderada y baja.
+actividad de niveles moderada y baja. A pesar de que parece haber tiempos de supervivencia mayores para los pacientes que realizan altas cantidades de actividad física, esto puede deberse al número de personas que forman parte de este grupo.
 
-```{r comorbilidad, echo = F, out.width='90%', cache = T}
-# Comorbilidad:
-# ggplot(datos, aes(x = tiempo, y = comorbilidades)) +
-#   geom_count(aes(alpha = after_stat(n)), shape = 16, size = 3) +
-#   scale_alpha(range = c(0.3, 1)) +
-#   theme_bw()
-```
 
-<!-- En base a \@ref(fig:comorbilidad) se espera que el tiempo medio de -->
-<!-- supervivencia para personas con mayor número de comorbilidades, sea -->
-<!-- menor que para las personas con menos comorbilidades.  -->
-<!-- No sé si me convence porque siento que hay pocas personas que tuvieron muchas comorbilidades, ponele que tuvieron 7 fue una, pero que tuvieron 6 comorbilidades fueron 3 y siento que podrían tener comportamiento parecido a las personas que tuvieron menos porque es como que hay dos en los primeros tiempos y uno que está más avanzado el estudio, pero siento que si hubiera más observaciones con esa cantidad de comorbilidades capaz serían parecidos a los otros  -->
+```{r datos-c, include = F}
+# Categorizando comorbilidades (armé un dataset nuevo porque sino pasaba algo raro) y también le puse que queden ordenados los niveles de actividad
+datos_c <- datos %>% 
+  mutate(
+    actividad = str_to_title(as.character(actividad)), 
+        actividad = factor(actividad,
+                       levels = c("Alta", "Moderada", "Baja"))) %>% 
 
-<!-- Tienes razon, que prefieres que le pongamos que si aumentamos el tamaño este seria el tiempo medio o podemos decir que un numero alto de comorbilidades es de 4 en adelante y ahi ya queda xd-->
-
-```{r categorizando-comorbilidades, include = F}
-
-datos <- datos %>% 
   mutate(comorbilidades = case_when(
     comorbilidades <= 2 ~ "pocas",
     (comorbilidades == 3 | comorbilidades == 4) ~ "moderadas",
@@ -286,14 +292,28 @@ datos <- datos %>%
     comorbilidades = str_to_title(as.character(comorbilidades)),
     comorbilidades = factor(comorbilidades,
                   levels = c("Pocas", "Moderadas", "Muchas"))) 
+summary(datos_c$comorbilidades)
 ```
 
 Algunas cantidades de comorbilidades fueron poco frecuentes entre los pacientes, sólo 3 de los 110 no tuvieron, un paciente presentó 7, otros 3 presentaron 6, entre otros. Por lo que se agruparon grupos de pacientes de acuerdo a las $"Cantidades \ de  \ comorbilidades"$ que pasaron, en tres niveles: pocas (0-2 comorbilidades), moderadas (3-4 comorbilidades) y muchas ( > 5 comorbilidades). 
+```{r boxplot-comorbilidades, echo = F, cache = T}
+datos_c %>% 
+  group_by(comorbilidades) %>% 
+  ggplot(aes(x = comorbilidades, y = tiempo, fill = "orange3")) + 
+  geom_boxplot() +
+  labs (title ='Gráfico : comorbilidades',
+        x = "Comorbilidades",
+        y = "Tiempo (en meses)") +
+ # scale_x_discrete(label = c("No", "Si")) +
+  theme_bw() +
+  theme(legend.position = "none") 
 
+```
+No parece haber muchas diferencias en los tiempos de supervivencia de los pacientes que tuvieron pocas comorbilidades (2 o menos) en comparación con aquellos que presentaron cantidades moderadas (3 o 4). 
 
 
 ```{r tabla-comorbilidad, echo = F, cache = T}
-datos %>% 
+datos_c %>% 
   mutate(comorbilidades = factor(comorbilidades)) %>% 
   group_by(comorbilidades) %>% 
   summarise(
@@ -325,7 +345,7 @@ En la Tabla \@ref(tab:tabla-comorbilidad) puede verse que mucha gente presentó 
 ```{r sexoactividad,out.width='90%', echo = F, cache = T}
 
 # Intento de boxplot sexo y actividad física
-datos %>% 
+datos_c %>% 
   mutate(
     sexo = str_to_title(as.character(sexo)),
     sexo = factor(sexo,
@@ -354,7 +374,7 @@ Los pacientes masculinos que participaron del estudio y realizaban bajos niveles
 ```{r actividadfumadores, echo = F, out.width='90%', cache = T}
 
 # Intento de actividad física y fumadores
-datos %>% 
+datos_c %>% 
   mutate(
         actividad = str_to_title(as.character(actividad)),
     actividad = factor(actividad,
@@ -381,88 +401,260 @@ No parece verse diferencia Figura \@ref(fig:actividadfumadores) entre los distin
 
 # Modelo
 
-Se analiza el mejor modelo 
+
 $$
 h_i (t) = h_0(t) \cdot e^{\beta_0 + \beta_1 \cdot x_i .....}
 $$
 
-# modelo para hacer el test
-```{r}
 
-modc_0 <- coxph(Surv(tiempo, complicacion) ~ 1, ties = "breslow", data = datos)
-modc_1 <- coxph(Surv(tiempo, complicacion) ~ edad, ties = "breslow", data = datos)
-modc_2 <- coxph(Surv(tiempo, complicacion) ~ sexo, ties = "breslow", data = datos)
-modc_3 <- coxph(Surv(tiempo, complicacion) ~ fumador, ties = "breslow", data = datos)
-modc_4 <- coxph(Surv(tiempo, complicacion) ~ actividad, ties = "breslow", data = datos)
-modc_5 <- coxph(Surv(tiempo, complicacion) ~ comorbilidades, data = datos, ties = "breslow")
-modc_6 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador, ties = "breslow", data = datos)
-modc_7 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + sexo, ties = "breslow", data = datos)
-modc_8 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + actividad, ties = "breslow", data = datos)
-modc_9 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + comorbilidades, ties = "breslow", data = datos)
+
+\newpage
+
+# Anexo
+
+<!-- ESTIMAMOS Y COMPARAMOS SUPERVIVENCIA ANTES DE VER MODELOS -->
+
+<!-- Test log-rank para variables categóricas sin orden -->
+_Test log-rank_
+$$
+H_0) La \; experiencia \; de\; supervivencia \; es \; la \; misma\;
+para \; los \; individuos \; de \; un \; grupo \; que \; otro
+$$
+
+$$
+H_1) La \; experiencia \; de\; supervivencia \; no \; es \; la \; misma\;
+para \; los \; individuos \; de \; un \; grupo \; que \; otro
+$$
+```{r log-rank, include = F}
+# Test log-rank:
+
+# Modelo edad: VER DE CATEGORIZAR EDADES
+lr_1 <- survdiff(Surv(tiempo, complicacion) ~ edad, rho = 0,
+                 data = datos_c)
+
+# Modelo sexo:
+lr_2 <-  survdiff(Surv(tiempo, complicacion) ~ sexo, rho = 0,
+                  data = datos_c)
+
+# Modelo fumador:
+lr_3 <- survdiff(Surv(tiempo, complicacion) ~ fumador, rho = 0,
+                 data = datos_c)
+
+
+# Armando para que quede con forma de tabla:
+log_rank <- as.data.frame(rbind(lr_2$pvalue, 
+                                lr_3$pvalue))
+colnames(log_rank) <- "p-value"
+
+row.names(log_rank) <- c('Sexo',
+                        'Fumador')
+```
+
+```{r tabla-log-rank, echo = F}
+# Tabla:
+log_rank %>% 
+  mutate(
+    across(where(is.numeric), # Para que sólo use 2 decimales
+           ~round(.x, 5))) %>%
+  kable(
+    caption = "p-values para Test Log Rank",
+    col.names = c("Variable", "P-value"),
+    escape = F) %>%
+  kable_styling(latex_options = "hold_position",
+                bootstrap_options = c("striped", "hover", "condensed")) %>%
+  column_spec(2, width = "3cm")
+
+```
+
+Los tiempos de supervivencia de los pacientes parecen ser significativamente diferentes entre aquellos que fuman y los que no. Sin embargo, no parece haber diferencias significativas entre los tiempos de supervivencia de los pacientes de sexo masculinos y las pacientes de sexo femeninas.
+<!-- VER SEXO -->
+
+
+<!-- Test de tendencia para variables con ordenamiento -->
+_Test de Tendencia_
+$$
+H_0) No \; hay \; ordenamiento \; en\; las \;curvas \;de \; supervivencia\; para \; los \; individuos
+$$
+$$
+H_1) Hay \; ordenamiento \; en\; las \;curvas \;de \; supervivencia\; para \; los \; individuos 
+$$
+<!-- Para actividad y para comorbilidades -->
+
+```{r test-tendencia, echo = F}
+# Actividad:
+ggsurvplot(fit = mod_4, data = datos_c,
+           #title = "Figura 10: Probabilidad de supervivencia estimada segun grupo etario",
+        #   palette = c("coral", "lightblue", "lightgreen"), 
+           conf.int = F, 
+           censor.shape = 20,
+           xlab = "Meses", 
+           ylab = "Probabilidad de supervivencia estimada", 
+           pval = T,
+           pval.method = T,
+           pval.coord = c(45, .9),
+           pval.method.coord = c(45, 1),
+           test.for.trend = T,
+         #  legend.labs = c("30 anos o menos", 
+                           # "Entre 31 y 40 anos",
+                           # "Mas de 40 anos"),
+           legend.title="")
+
+# ggpubr::ggpar(fig_10, font.legend = list(size = 12, color = "black", face = "bold"))
+
+
+ggsurvplot(fit = mod_5, data = datos_c,
+           #title = "Figura 10: Probabilidad de supervivencia estimada segun grupo etario",
+        #   palette = c("coral", "lightblue", "lightgreen"), 
+           conf.int = F, 
+           censor.shape = 20,
+           xlab = "Meses", 
+           ylab = "Probabilidad de supervivencia estimada", 
+           pval = T,
+           pval.method = T,
+           pval.coord = c(45, .9),
+           pval.method.coord = c(45, 1),
+           test.for.trend = T,
+         #  legend.labs = c("30 anos o menos", 
+                           # "Entre 31 y 40 anos",
+                           # "Mas de 40 anos"),
+           legend.title="")
+```
+
+
+
+No parece haber diferencias significativas entre el tiempo de supervivencia de los pacientes que presentaron pocas, moderadas y muchas comorbilidades. Tampoco parece haber diferencias significativas entre los tiempos de supervivencia de los pacientes de acuerdo a los niveles de actividad física que realizaron.
+
+
+<!-- VER QUE DECIR DE SEXO PORQUE ESTÁ AL BORDE -->
+
+
+
+
+## Selección de modelos:
+
+```{r seleccion-modelos, include = F}
+# Modelos para hacer tests:
+
+# Nulo:
+modc_0 <- coxph(Surv(tiempo, complicacion) ~ 1, 
+                ties = "breslow", data = datos_c)
+
+# Edad:
+modc_1 <- coxph(Surv(tiempo, complicacion) ~ edad, 
+                ties = "breslow", data = datos_c)
+
+# Sexo:
+modc_2 <- coxph(Surv(tiempo, complicacion) ~ sexo,
+                ties = "breslow", data = datos_c)
+
+# Fumador:
+modc_3 <- coxph(Surv(tiempo, complicacion) ~ fumador,
+                ties = "breslow", data = datos_c)
+
+# Actividad:
+modc_4 <- coxph(Surv(tiempo, complicacion) ~ actividad,
+                ties = "breslow", data = datos_c)
+
+# Comorbilidades:
+modc_5 <- coxph(Surv(tiempo, complicacion) ~ comorbilidades, 
+                data = datos_c, ties = "breslow")
+
+# Edad y Fumador:
+modc_6 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador, 
+                ties = "breslow", data = datos_c)
+
+# Edad, Fumador y Sexo:
+modc_7 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + sexo,
+                ties = "breslow", data = datos_c)
+
+# Edad, Fumador y Actividad:
+modc_8 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + actividad,
+                ties = "breslow", data = datos_c)
+
+# Edad, Fumador y Comorbilidades:
+modc_9 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + comorbilidades, 
+                ties = "breslow", data = datos_c)
 
 
 ```
 
-# modelo para graficar
-```{r}
+```{r supervivencia-modelos, include = F}
+# Modelos para graficar:
 
-mod_0 <- survfit(Surv(tiempo, complicacion) ~ 1, data = datos)
+# Modelo Nulo
+mod_0 <- survfit(Surv(tiempo, complicacion) ~ 1, data = datos_c)
 summary(mod_0)
-mod_1 <- survfit(Surv(tiempo, complicacion) ~ edad, data = datos)
+
+# Modelo con edad:
+mod_1 <- survfit(Surv(tiempo, complicacion) ~ edad, data = datos_c)
 summary(mod_1)
-mod_2 <- survfit(Surv(tiempo, complicacion) ~ sexo, data = datos)
+
+# Modelo con sexo:
+mod_2 <- survfit(Surv(tiempo, complicacion) ~ sexo, data = datos_c)
 summary(mod_2)
-mod_3 <- survfit(Surv(tiempo, complicacion) ~ fumador, data = datos)
+
+# Modelo con fumador:
+mod_3 <- survfit(Surv(tiempo, complicacion) ~ fumador, data = datos_c)
 summary(mod_3)
-mod_4 <- survfit(Surv(tiempo, complicacion) ~ actividad, data = datos)
+
+# Modelo con actividad:
+mod_4 <- survfit(Surv(tiempo, complicacion) ~ actividad, data = datos_c)
 summary(mod_4)
-mod_5 <- survfit(Surv(tiempo, complicacion) ~ comorbilidades, data = datos)
+
+# Modelo con comorbilidades
+mod_5 <- survfit(Surv(tiempo, complicacion) ~ comorbilidades, data = datos_c)
 summary(mod_5)
 
-
-
 ```
 
 
-# graficos
 
-```{r}
 
-ggsurvplot(fit = mod_0, data = datos,
+```{r graficos-modelos, echo = F}
+# GRAFICOS DE SUPERVIVENCIA:
+
+# Modelo nulo:
+ggsurvplot(fit = mod_0, data = datos_c,
            censor.shape = 20,
            xlab = "Tiempo (en meses)",
            ylab = "Probabilidad de Supervivencia estimada",
            legend = "none",
            legend.title = "Gr")
 
-ggsurvplot(fit = mod_2, data = datos,
+# Modelo con sexo:
+ggsurvplot(fit = mod_2, data = datos_c,
            censor.shape = 20,
            xlab = "Meses",
            ylab = "Probabilidad de Supervivencia estimada",
            legend.labs = c("Femenino", "Masculino"),
            legend.title = "")
-ggsurvplot(fit = mod_3, data = datos,
+
+# Modelo con fumador:
+ggsurvplot(fit = mod_3, data = datos_c,
            censor.shape = 20,
            xlab = "Meses",
            ylab = "Probabilidad de Supervivencia estimada",
            legend.labs = c("No Fumador", "Fumador"),
            legend.title = "")
 
-ggsurvplot(fit = mod_4, data = datos,
+# Modelo con actividad:
+ggsurvplot(fit = mod_4, data = datos_c,
            censor.shape = 20,
            xlab = "Meses",
            ylab = "Probabilidad de Supervivencia estimada",
            legend.labs = c("Alta", "Baja", "Moderada"),
            legend.title = "")
 
-
-
 ```
 
+Se utilizó el _Test de Razón de Verosimilitud_, con hipótesis de la forma:
+$$
+H_0) \beta = 0 \quad H_1) \beta \neq 0
+$$
 
-# Test
+```{r tests, include = F}
 
-```{r}
+# Tests:
 modelos <- as.data.frame(rbind(-2*modc_1$loglik[1], -2*modc_1$loglik[2], -2*modc_2$loglik[2], -2*modc_3$loglik[2], -2*modc_4$loglik[2], -2*modc_5$loglik[2], -2*modc_6$loglik[2], -2*modc_7$loglik[2], -2*modc_8$loglik[2], -2*modc_9$loglik[2]))
 
 colnames(modelos) <- "-2 log (L)"
@@ -473,22 +665,29 @@ modelos
 
 ```
 
+```{r}
+# Lo mismo pero con p-values:
+pvalues <- as.data.frame(rbind(-2*modc_1$loglik[1], -2*modc_1$loglik[2], -2*modc_2$loglik[2], -2*modc_3$loglik[2], -2*modc_4$loglik[2], -2*modc_5$loglik[2], -2*modc_6$loglik[2], -2*modc_7$loglik[2], -2*modc_8$loglik[2], -2*modc_9$loglik[2]))
 
-\newpage
+pchisq(-2*modc_1$loglik[2], df = 1, lower.tail = F)
+pchisq(-2*modc_2$loglik[2], df = 1, lower.tail = F)
+pchisq(-2*modc_3$loglik[2], df = 1, lower.tail = F)
+pchisq(-2*modc_4$loglik[2], df = 1, lower.tail = F)
+pchisq(-2*modc_5$loglik[2], df = 1, lower.tail = F)
 
-# Anexo
+colnames(modelos) <- "-2 log (L)"
 
-## Selección de modelos:
+row.names(modelos) <- c('none', 'Edad', 'Sexo', 'Fumador', 'Actividad', 'Comorbilidades', 'Edad + Fumador', 'Edad + Fumador + Sexo', 'Edad + Fumador + Actividad', 'Edad + Fumador + Comorbilidades')
 
-Se utilizó el _Test de Razón de Verosimilitud_, con hipótesis de la forma:
-$$
-H_0) \beta = 0 \quad H_1) \beta \neq 0
-$$
+modelos
+
+```
+
+Se incluye la variable edad $(p < 0.05)$ 
+
 
 
 ### Modelos de una variable
-Empezamos con el modelo más simple:
-
 - Modelo nulo o basal:
   - edad = 0 (¿habría que categorizar?)
   - hombre
@@ -501,19 +700,12 @@ $$
 h_i(t) = h_0 (t) \quad i = \overline{1,110}
 $$
 
-```{r Modelo0, include = F}
-# Modelo para graficar
 
-# Modelo para hacer el test:
-modc_0 <- coxph(Surv(tiempo, complicacion) ~ 1,
-               ties = "breslow", data = datos)
-
-```
 
 
 ```{r Supervivencia, echo = F,, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier',  out.width='60%', cache = T}
 
-ggsurvplot(fit = mod_0, data = datos,
+ggsurvplot(fit = mod_0, data = datos_c,
            censor.shape = 20,
            xlab = "Tiempo (en meses)",
            ylab = "Probabilidad de Supervivencia estimada",
@@ -532,7 +724,7 @@ $$
 # Para graficar:
 # Calcula la función de supervivencia
 mod_1 <- survfit(Surv(tiempo, complicacion) ~ edad,
-                 data = datos)
+                 data = datos_c)
 summary(mod_1)
 
 ```
@@ -540,7 +732,7 @@ summary(mod_1)
 
 ```{r grafsup1, echo = F,  fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier de acuerdo a las edades',out.width='80%', cache = T}
 # No está bueno, capaz podríamos categorizar para poder graficarlo VER nidea qué se hace para continuas 
-# ggsurvplot(fit = mod_1, data = datos,
+# ggsurvplot(fit = mod_1, data = datos_c,
 #            censor.shape = 20,
 #            xlab = "Tiempo (en meses)",
 #            ylab = "Probabilidad de Supervivencia estimada",
@@ -551,13 +743,11 @@ summary(mod_1)
 
 
 
-
-
 ```{r testm1, include = F}
 
 # Haciendo el modelo de cox para edad:
 modc_1 <- coxph(Surv(tiempo, complicacion) ~ edad, 
-               ties = "breslow", data = datos)
+               ties = "breslow", data = datos_c)
 summary(modc_1)
 # Como los pvalue son muy chicos, RH0
 
@@ -582,14 +772,14 @@ $$
 ```{r supervivencia2, include = F}
 # Supervivencia para graficar
 mod_2 <- survfit(Surv(tiempo, complicacion) ~ sexo,
-                 data = datos)
+                 data = datos_c)
 summary(mod_2)
 ```
 
 
 ```{r grafsup2, echo = F, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier según sexo', out.width='80%', cache = T}
 
-ggsurvplot(fit = mod_2, data = datos,
+ggsurvplot(fit = mod_2, data = datos_c,
            censor.shape = 20,
            xlab = "Meses",
            ylab = "Probabilidad de Supervivencia estimada",
@@ -604,7 +794,7 @@ Se espera que el tiempo de supervivencia de las mujeres sea mayor que la de los 
 
 # Haciendo el modelo de cox para sexo:
 modc_2 <- coxph(Surv(tiempo, complicacion) ~ sexo, 
-               ties = "breslow", data = datos)
+               ties = "breslow", data = datos_c)
 summary(modc_2)
 
 
@@ -636,14 +826,14 @@ $$
 ```{r supervivencia3, include = F}
 # Modelo para graficar
 mod_3 <- survfit(Surv(tiempo, complicacion) ~ fumador,
-                 data = datos)
+                 data = datos_c)
 summary(mod_3)
 ```
 
 
 ```{r grafsup3, echo = F, fig.cap = 'Supervivencia estimada por Kaplan-Meier según si los pacientes son fumadores activos o no',out.width='70%', cache = T}
 
-ggsurvplot(fit = mod_3, data = datos,
+ggsurvplot(fit = mod_3, data = datos_c,
            censor.shape = 20,
            xlab = "Meses",
            ylab = "Probabilidad de Supervivencia estimada",
@@ -660,7 +850,7 @@ Los pacientes que no son fumadores muestran tiempos de supervivencia más altos 
 
 # Haciendo el modelo de cox para sexo:
 modc_3 <- coxph(Surv(tiempo, complicacion) ~ fumador, 
-               ties = "breslow", data = datos)
+               ties = "breslow", data = datos_c)
 summary(modc_3)
 
 
@@ -696,7 +886,7 @@ $$
 ```{r supervivencia4, include = F}
 # Modelo para graficar
 mod_4 <- survfit(Surv(tiempo, complicacion) ~ actividad,
-                 data = datos)
+                 data = datos_c)
 summary(mod_4)
 ```
 
@@ -704,7 +894,7 @@ summary(mod_4)
 ```{r grafsup4, echo = F, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier de acuerdo a los niveles de actividad física', out.width='70%', cache = T}
 
 # ORDENAR ALTA MODERADA BAJA O BAJA MODERADA ALTA
-ggsurvplot(fit = mod_4, data = datos,
+ggsurvplot(fit = mod_4, data = datos_c,
            censor.shape = 20,
            xlab = "Meses",
            ylab = "Probabilidad de Supervivencia estimada",
@@ -719,7 +909,7 @@ No parece haber grandes diferencias en los tiempos de supervivencia de los pacie
 
 # Haciendo el modelo de cox para sexo:
 modc_4 <- coxph(Surv(tiempo, complicacion) ~ actividad, 
-               ties = "breslow", data = datos)
+               ties = "breslow", data = datos_c)
 summary(modc_4)
 
 
@@ -754,11 +944,11 @@ $$
 # Modelo para graficar
 # NO ME ACUERDO COMO CATEGORIZABA R VER QUE LO ESTEMOS PONIENDO IGUAL
 mod_5 <- survfit(Surv(tiempo, complicacion) ~ comorbilidades,
-                 data = datos)
+                 data = datos_c)
 summary(mod_5)
 
 modc_5 <- coxph(Surv(tiempo, complicacion) ~ comorbilidades,
-                data = datos, ties = "breslow")
+                data = datos_c, ties = "breslow")
 summary(modc_5)
 
 ```
@@ -766,11 +956,11 @@ summary(modc_5)
 
 ```{r Supervivencia_M5, out.width='70%', echo = F}
 
-ggsurvplot(fit = mod_5, data = datos,
+ggsurvplot(fit = mod_5, data = datos_c,
            censor.shape = 20,
            xlab = "Meses",
            ylab = "Probabilidad de Supervivencia estimada",
-           legend.labs = levels(datos$comorbilidades),
+           legend.labs = levels(datos_c$comorbilidades),
            legend.title = "Comorbilidades")
 
 
@@ -793,7 +983,7 @@ $$
 ```{r Modelo6-Edad-Fumador, include = F}
  # VER SI PONER O NO, MEDIO QUE YA ESTA HECHO ARRIBA
 modc_6 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador, 
-               ties = "breslow", data = datos)
+               ties = "breslow", data = datos_c)
 summary(modc_6)
 
 ```
@@ -836,7 +1026,7 @@ $$
 ```{r Modelo7-Edad-Fumador-Sexo, include = F}
 # Haciendo el modelo de cox para edad, fumador y sexo:
 modc_7 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + sexo, 
-               ties = "breslow", data = datos)
+               ties = "breslow", data = datos_c)
 summary(modc_7)
 
 -2 * (modc_6$loglik[2] - modc_7$loglik[2])
@@ -857,7 +1047,7 @@ $$
 
 # Haciendo el modelo de cox para sexo:
 modc_8 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + actividad, 
-               ties = "breslow", data = datos)
+               ties = "breslow", data = datos_c)
 summary(modc_8)
 
 
@@ -883,7 +1073,7 @@ $$
 
 # Haciendo el modelo de cox para sexo:
 modc_9 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + comorbilidades, 
-               ties = "breslow", data = datos)
+               ties = "breslow", data = datos_c)
 summary(modc_9)
 
 
@@ -903,98 +1093,7 @@ Ninguno dio muy significativo, sexo dio un poco significativo, pero tampoco sien
 
 
 
-
-
-
-
-<!-- CREO QUE A PARTIR DE ACÁ NO SERÍA IMPORTANTE. -->
-
-
-<!-- -   Modelo 10: Edad, Fumador  -->
-<!-- $$ -->
-<!--     h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot s_i + \beta_2 \cdot f_i} -->
-<!-- $$ -->
-
-<!-- ```{r testm10, include = F} -->
-
-<!-- # Haciendo el modelo de cox para sexo: -->
-<!-- modc_10 <- coxph(Surv(tiempo, complicacion) ~ sexo + fumador,  -->
-<!--                ties = "breslow", data = datos) -->
-<!-- summary(modc_10) -->
-
-
-<!-- # Test de verosimilitud: -->
-<!-- # -2*log(reducido) - log(completo) -->
-<!-- -2*(modc_10$loglik[1] - modc_10$loglik[2]) -->
-<!-- ``` -->
-
-<!-- Con una significación del 5%, puede decirse que el sexo del paciente y si es fumador activo o no afecta al tiempo de supervivencia estimado. -->
-
-
-
-<!-- \vspace{2em}   -->
-
-<!-- -   Modelo 11: Sexo y Actividad  -->
-<!-- $$ -->
-<!--     h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot s_i +  -->
-<!--                            \beta_3 \cdot a_{1i} + -->
-<!--                            \beta_4 \cdot a_{2i}} -->
-<!-- $$ -->
-
-<!-- ```{r testm11, include = F} -->
-
-<!-- # Haciendo el modelo de cox para sexo: -->
-<!-- modc_11 <- coxph(Surv(tiempo, complicacion) ~ sexo + actividad,  -->
-<!--                ties = "breslow", data = datos) -->
-<!-- summary(modc_11) -->
-
-
-<!-- # Test de verosimilitud: -->
-<!-- # -2*log(reducido) - log(completo) -->
-<!-- -2*(modc_11$loglik[1] - modc_11$loglik[2]) -->
-<!-- ``` -->
-
-
-<!-- Con una significación del 5%, puede decirse que el sexo biológico del paciente y el nivel de actividad física que realiza afecta al tiempo de supervivencia estimado. -->
-
-
-
-<!-- \vspace{2em}   -->
-
-<!-- -   Modelo 12: Sexo y Comorbilidad -->
-<!-- $$ -->
-<!--     h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot s_i +  -->
-<!--                            \beta_3 \cdot a_{1i} + -->
-<!--                            \beta_4 \cdot a_{2i}} -->
-<!-- $$ -->
-
-
-<!-- ```{r testm12, include = F} -->
-
-<!-- # Haciendo el modelo de cox para sexo: -->
-<!-- modc_12 <- coxph(Surv(tiempo, complicacion) ~ sexo + comorbilidades,  -->
-<!--                ties = "breslow", data = datos) -->
-<!-- summary(modc_12) -->
-
-
-<!-- # Test de verosimilitud: -->
-<!-- # -2*log(reducido) - log(completo) -->
-<!-- -2*modc_12$loglik[1] - modc_12$loglik[2] -->
-<!-- ``` -->
-
-
-<!-- Con una significación del 5%, puede decirse que el sexo y la cantidad de comorbilidades que presentó el paciente afecta al tiempo de supervivencia estimado. -->
-
 \newpage
-
-
-
-
-
-
-
-
-
 
 
 
