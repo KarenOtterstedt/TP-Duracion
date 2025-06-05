@@ -1,6 +1,6 @@
 ---
-title: "Trabajo Práctico Análisis de Duración"
-author: "Karen Otterstedt Juan Sebastián Reines Urieles"
+title: ""
+authors: ""
 date: "2025-05-16"
 output:
   bookdown::pdf_document2:
@@ -15,6 +15,23 @@ output:
     number_sections: false
 ---
 
+
+{=tex}
+\begin{titlepage}
+\centering
+\vspace*{4cm} % espacio superior
+
+{\Huge \textbf{Trabajo Práctico Análisis de Duración}}\\[2cm]
+
+{\Large Karen Otterstedt}\\[0.5cm]
+{\Large Juan Sebastian Reines}\\[0.5cm]
+
+
+\vfill
+
+\end{titlepage}
+
+\newpage
 
 
 ```{r CHAT, include = F}
@@ -62,6 +79,7 @@ library(tidyverse)
 library(dplyr)
 library(knitr)
 library(purrr)
+library(stringr)
 # install.packages("latex2exp")
 library(latex2exp)
 library(grid)
@@ -86,6 +104,7 @@ datos <- read_csv("conjunto_grupo_7.csv")
 summary(datos)
 
 ```
+
 
 ```{r Paletas_colores, include = F}
 # Para ver paletas de colores: (Me gustó la RdBu, pero decime voooos)
@@ -118,6 +137,8 @@ summary(datos)
 
 
 ```
+
+\newpage
 
 # Introducción
 
@@ -159,21 +180,10 @@ Se recolectaron las siguientes variables:
 
 
 # Análisis Descriptivo
-Para conocer el comportamiento de los datos recolectados, se realiza un análisis descriptivo.
 
+## *Edad*
+Para conocer el comportamiento de los datos recolectados, sobre la variable edad se realiza una categorización 
 
-```{r Edades, echo = F,out.width='70%', cache = T}
-# Histograma:
-ggplot(datos, aes(x = edad_c)) +
-  geom_histogram(fill = "#92C5DE", color = "black") +
-  theme_bw()+
-  xlim = seq(35, 100, length.out = 10)+
-  labs(title = 'Histograma de las edades de los pacientes al iniciar su seguimiento',
-       y = "Frecuencia",
-       x = "Edad")
-```
-
-En base la Figura \@ref(fig:Edades) se puede ver que la mayoría de los pacientes en el estudio son mayores a 60 años.
 
 
 Con el fin de enriquecer el VER
@@ -198,12 +208,12 @@ datos <- datos %>%
     com_c = factor(com_c,
                   levels = c("Pocas", "Moderadas", "Muchas"))) %>%
   mutate(edad_c = case_when(
-    (40 <= edad & (edad < 60)) ~ "40 - 60",
-    (60 <= edad & (edad< 70)) ~ "60 - 70",
-    T ~ "> 70")) %>% 
+    (edad < 60) ~ 1,
+    (edad < 70) ~ 2,
+    T ~ 3))
   # Ordenando también edades:
-  mutate(edad_c = factor(edad_c, 
-                         levels = c("40 - 60", "60 - 70", "> 70")))
+  # mutate(edad_c = factor(edad_c, 
+  #                        levels = c("40 - 60", "60 - 70", "> 70")))
 ``` 
 
 
@@ -439,10 +449,6 @@ $$
 ```{r log-rank, include = F}
 # Test log-rank:
 
-# Modelo edad: VER DE CATEGORIZAR EDADES
-lr_1 <- survdiff(Surv(tiempo, complicacion) ~ edad_c, rho = 0,
-                 data = datos)
-
 # Modelo sexo:
 lr_2 <-  survdiff(Surv(tiempo, complicacion) ~ sexo, rho = 0,
                   data = datos)
@@ -481,7 +487,42 @@ Los tiempos de supervivencia de los pacientes parecen ser significativamente dif
 <!-- VER SEXO -->
 
 
+
+```{r supervivencia-modelos, include = F}
+# Modelos para graficar:
+
+# Modelo Nulo
+mod_0 <- survfit(Surv(tiempo, complicacion) ~ 1, data = datos)
+summary(mod_0)
+
+# Modelo con edad:
+mod_1 <- survfit(Surv(tiempo, complicacion) ~ edad_c, data = datos)
+summary(mod_1)
+
+# Modelo con sexo:
+mod_2 <- survfit(Surv(tiempo, complicacion) ~ sexo, data = datos)
+summary(mod_2)
+
+# Modelo con fumador:
+mod_3 <- survfit(Surv(tiempo, complicacion) ~ fumador, 
+                 data = datos)
+summary(mod_3)
+
+# Modelo con actividad:
+mod_4 <- survfit(Surv(tiempo, complicacion) ~ actividad, 
+                 data = datos)
+summary(mod_4)
+
+# Modelo con comorbilidades
+mod_5 <- survfit(Surv(tiempo, complicacion) ~ com_c, 
+                 data = datos)
+summary(mod_5)
+
+```
+
 <!-- Test de tendencia para variables con ordenamiento -->
+
+
 _Test de Tendencia_
 $$
 H_0) No \; hay \; ordenamiento \; en\; las \;curvas \;de \; supervivencia\; para \; los \; individuos
@@ -493,29 +534,34 @@ $$
 
 
 ```{r test-tendencia-edadc,echo = F}
+
+titulo1 <- str_wrap("Figura : Probabilidad de supervivencia estimada según edades de los pacientes", width = 40)
+
 ggsurvplot(fit = mod_1, data = datos,
-           #title = "Figura 10: Probabilidad de supervivencia estimada segun grupo etario",
+           title = titulo1,
         #   palette = c("coral", "lightblue", "lightgreen"), 
            conf.int = F, 
            censor.shape = 20,
-           xlab = "Meses", 
+           xlab = "Tiempo (en meses)", 
            ylab = "Probabilidad de supervivencia estimada", 
            pval = T,
            pval.method = T,
-           pval.coord = c(45, .9),
+           pval.coord = c(45, .8),
            pval.method.coord = c(45, 1),
            test.for.trend = T,
-         #  legend.labs = c("30 anos o menos", 
-                           # "Entre 31 y 40 anos",
-                           # "Mas de 40 anos"),
+           legend.labs = c("40 a 60 años", 
+                          "60 a 70 años",
+                          "Más de 70 años"),
            legend.title="")
 ```
 Hay diferencias significativas en el tiempo de supervivencia de los pacientes que presentaron de 40 a 60 años, 60 a 70, y mayores de 70.
 
 ```{r test-tendencia-actividad, echo = F}
 # Actividad:
+titulo2 <- str_wrap("Figura : Probabilidad de supervivencia estimada según nivel de actividad física", width = 40)
+
 ggsurvplot(fit = mod_4, data = datos,
-           #title = "Figura 10: Probabilidad de supervivencia estimada segun grupo etario",
+           title = titulo2,
         #   palette = c("coral", "lightblue", "lightgreen"), 
            conf.int = F, 
            censor.shape = 20,
@@ -523,33 +569,55 @@ ggsurvplot(fit = mod_4, data = datos,
            ylab = "Probabilidad de supervivencia estimada", 
            pval = T,
            pval.method = T,
-           pval.coord = c(45, .9),
+           pval.coord = c(45, .8),
            pval.method.coord = c(45, 1),
            test.for.trend = T,
-         #  legend.labs = c("30 anos o menos", 
-                           # "Entre 31 y 40 anos",
-                           # "Mas de 40 anos"),
+           legend.labs = c("Alto", 
+                           "Moderada",
+                           "Baja"),
+           legend.title="")
+
+ggsurvplot(fit = mod_5, data = datos,
+           #title = titulo,
+        #   palette = c("coral", "lightblue", "lightgreen"), 
+           conf.int = F, 
+           censor.shape = 20,
+           xlab = "Tiempo (en meses)", 
+           ylab = "Probabilidad de supervivencia estimada", 
+           pval = T,
+           pval.method = T,
+           pval.coord = c(45, 0.8),
+           pval.method.coord = c(45, 1),
+           test.for.trend = T,
+           legend.labs = c("Pocas", 
+                           "Moderadas",
+                           "Muchas"),
            legend.title="")
 
 # ggpubr::ggpar(fig_10, font.legend = list(size = 12, color = "black", face = "bold"))
 ```
 
+
 ```{r test-tendencia-comorbilidades,echo = F}
+
+titulo <- str_wrap("Figura : Probabilidad de supervivencia estimada según cantidad de comorbilidades", width = 40)
+
 ggsurvplot(fit = mod_5, data = datos,
-           #title = "Figura 10: Probabilidad de supervivencia estimada segun grupo etario",
+           title = titulo,
+           # title = "Figura : Probabilidad de supervivencia estimada \n según cantidad de comorbilidades",
         #   palette = c("coral", "lightblue", "lightgreen"), 
            conf.int = F, 
            censor.shape = 20,
-           xlab = "Meses", 
+           xlab = "Tiempo (en meses)", 
            ylab = "Probabilidad de supervivencia estimada", 
            pval = T,
            pval.method = T,
-           pval.coord = c(45, .9),
+           pval.coord = c(45, 0.8),
            pval.method.coord = c(45, 1),
            test.for.trend = T,
-         #  legend.labs = c("30 anos o menos", 
-                           # "Entre 31 y 40 anos",
-                           # "Mas de 40 anos"),
+           legend.labs = c("Pocas", 
+                           "Moderadas",
+                           "Muchas"),
            legend.title="")
 ```
 
@@ -571,7 +639,7 @@ modc_0 <- coxph(Surv(tiempo, complicacion) ~ 1,
                 ties = "breslow", data = datos)
 
 # Edad:
-modc_1 <- coxph(Surv(tiempo, complicacion) ~ edad_c, 
+modc_1 <- coxph(Surv(tiempo, complicacion) ~ edad, 
                 ties = "breslow", data = datos)
 
 # Sexo:
@@ -609,39 +677,40 @@ modc_9 <- coxph(Surv(tiempo, complicacion) ~ edad_c + fumador + com_c,
 
 ```
 
-```{r supervivencia-modelos, include = F}
-# Modelos para graficar:
+Evaluando linealidad de edad:
+\begin{tabular}{l c r}
+$e_1$ & $e_2$ &  \\
+\hline
+0 & 0  & (40 <= Edad < 60)\\
+1 & 0  & (60 <= Edad < 70)\\
+0 & 1  & (70 < Edad)\\
+\end{tabular}
 
-# Modelo Nulo
-mod_0 <- survfit(Surv(tiempo, complicacion) ~ 1, data = datos)
-summary(mod_0)
 
-# Modelo con edad:
-mod_1 <- survfit(Surv(tiempo, complicacion) ~ edad_c, data = datos)
-summary(mod_1)
+```{r edad_c-vs-edad, include = F}
+# Modelo reducido (edad categorizada) vs modelo completo(edad continua y edad categorizada)
 
-# Modelo con sexo:
-mod_2 <- survfit(Surv(tiempo, complicacion) ~ sexo, data = datos)
-summary(mod_2)
+# Creamos variables dummies, porque ya hicimos las categorizadas:
+datos <- datos %>% 
+  # Creamos dos columnas: edad_d1 (dummie 1) y edad_d2 (dummie 2)
+ mutate(edad_d1 = case_when(
+    (edad_c == 1 ) ~ 0,
+    (edad_c == 2) ~ 1,
+    T ~ 0),
+    edad_d2 = case_when(
+          (edad_c == 1 ) ~ 0,
+    (edad_c == 2) ~ 0,
+    T ~ 1))
 
-# Modelo con fumador:
-mod_3 <- survfit(Surv(tiempo, complicacion) ~ fumador, 
-                 data = datos)
-summary(mod_3)
+# Modelo con las dummies:
+mod_dummies <- coxph(Surv(tiempo, complicacion) ~ fumador + edad_d1 + edad_d2, 
+                     ties = "breslow",
+                     data = datos)
 
-# Modelo con actividad:
-mod_4 <- survfit(Surv(tiempo, complicacion) ~ actividad, 
-                 data = datos)
-summary(mod_4)
-
-# Modelo con comorbilidades
-mod_5 <- survfit(Surv(tiempo, complicacion) ~ com_c, 
-                 data = datos)
-summary(mod_5)
+mod_orden <- coxph(Surv(tiempo, complicacion) ~ fumador + edad_c,
+                   ties = "breslow", data = datos)
 
 ```
-
-
 
 
 ```{r graficos-supervivencia, echo = F}
@@ -701,29 +770,38 @@ $$
 # Tests:
 modelos <- as.data.frame(rbind(-2*modc_1$loglik[1], -2*modc_1$loglik[2], -2*modc_2$loglik[2], -2*modc_3$loglik[2], -2*modc_4$loglik[2], -2*modc_5$loglik[2], -2*modc_6$loglik[2], -2*modc_7$loglik[2], -2*modc_8$loglik[2], -2*modc_9$loglik[2]))
 
-colnames(modelos) <- "-2 log (L)"
+
+pchisq(-2*(modc_0$loglik[1] - modc_2$loglik[2]),
+       df=1, lower.tail = FALSE)
+
+colnames(modelos) <- c("-2 log (L)")
 
 row.names(modelos) <- c('none', 'Edad', 'Sexo', 'Fumador', 'Actividad', 'Comorbilidades', 'Edad + Fumador', 'Edad + Fumador + Sexo', 'Edad + Fumador + Actividad', 'Edad + Fumador + Comorbilidades')
 
 modelos
 
 ```
-
-```{r}
-# Lo mismo pero con p-values:
-pvalues <- as.data.frame(rbind(-2*modc_1$loglik[1], -2*modc_1$loglik[2], -2*modc_2$loglik[2], -2*modc_3$loglik[2], -2*modc_4$loglik[2], -2*modc_5$loglik[2], -2*modc_6$loglik[2], -2*modc_7$loglik[2], -2*modc_8$loglik[2], -2*modc_9$loglik[2]))
-
-pchisq(-2*modc_1$loglik[2], df = 1, lower.tail = F)
-pchisq(-2*modc_2$loglik[2], df = 1, lower.tail = F)
-pchisq(-2*modc_3$loglik[2], df = 1, lower.tail = F)
-pchisq(-2*modc_4$loglik[2], df = 1, lower.tail = F)
-pchisq(-2*modc_5$loglik[2], df = 1, lower.tail = F)
-
-colnames(modelos) <- "-2 log (L)"
-
-row.names(modelos) <- c('none', 'Edad', 'Sexo', 'Fumador', 'Actividad', 'Comorbilidades', 'Edad + Fumador', 'Edad + Fumador + Sexo', 'Edad + Fumador + Actividad', 'Edad + Fumador + Comorbilidades')
-
-modelos
+ 
+```{r pvalues-tests, include = F}
+# # Lo mismo pero con p-values:
+# pvalues <- as.data.frame(rbind(pchisq(-2*modc_1$loglik[2], 
+#                                       df = 1, lower.tail = F),
+#                                pchisq(-2*modc_2$loglik[2], df = 1,
+#                                       lower.tail = F),
+#                                pchisq(-2*modc_3$loglik[2], df = 1,
+#                                       lower.tail = F),
+#                                pchisq(-2*modc_4$loglik[2], df = 1,
+#                                       lower.tail = F),
+#                                pchisq(-2*modc_5$loglik[2], df = 1,
+#                                       lower.tail = F)))
+# 
+# 
+# 
+# colnames(pvalues) <- "p-value"
+# 
+# row.names(pvalues) <- c( 'Edad', 'Sexo', 'Fumador', 'Actividad', 'Comorbilidades')
+# 
+# pvalues
 
 ```
 
@@ -743,8 +821,6 @@ Se incluye la variable edad $(p < 0.05)$
 $$
 h_i(t) = h_0 (t) \quad i = \overline{1,110}
 $$
-
-
 
 
 ```{r Supervivencia, echo = F,, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier',  out.width='60%', cache = T}
@@ -776,12 +852,12 @@ summary(mod_1)
 
 ```{r grafsup1, echo = F,  fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier de acuerdo a las edades',out.width='80%', cache = T}
 # No está bueno, capaz podríamos categorizar para poder graficarlo VER nidea qué se hace para continuas 
-# ggsurvplot(fit = mod_1, data = datos,
-#            censor.shape = 20,
-#            xlab = "Tiempo (en meses)",
-#            ylab = "Probabilidad de Supervivencia estimada",
-#            legend = "none",
-#            legend.title = "")
+ggsurvplot(fit = mod_1, data = datos,
+           censor.shape = 20,
+           xlab = "Tiempo (en meses)",
+           ylab = "Probabilidad de Supervivencia estimada",
+           legend = "none",
+           legend.title = "")
 
 ```
 
@@ -800,7 +876,7 @@ summary(modc_1)
 # -2*log(reducido) - log(completo)
 test_m1 <- -2*(modc_0$loglik - modc_1$loglik[2])
 
-pchisq(test_m1, df=1, lower.tail = FALSE)
+pchisq(test_m1, df=2, lower.tail = FALSE)
 
 ```
 Se incluye la variable edad $(p < 0.05)$
@@ -846,7 +922,8 @@ summary(modc_2)
 # -2*log(reducido) - log(completo)
 -2*(modc_0$loglik[1] - modc_2$loglik[2])
 
-pchisq(test_m1, df=1, lower.tail = FALSE)
+pchisq(-2*(modc_0$loglik[1] - modc_2$loglik[2]),
+       df=1, lower.tail = FALSE)
 
 ```
 
@@ -1046,7 +1123,7 @@ Si fuman o no aporta significativamente cuando está edad.
 La edad también aporta cuando está fumador.
 
 
-<!-- la edad del paciente y si es fumador activo o no afecta al tiempo de supervivencia estimado $(p < 0.05)$. -->
+la edad del paciente y si es fumador activo o no afecta al tiempo de supervivencia estimado $(p < 0.05)$.
 
 
 
@@ -1074,7 +1151,6 @@ modc_7 <- coxph(Surv(tiempo, complicacion) ~ edad_c + fumador + sexo,
 summary(modc_7)
 
 -2 * (modc_6$loglik[2] - modc_7$loglik[2])
-
 ```
 Parece significativo $(p < 0.05)$ usar un modelo que contenga la Edad del paciente, si es Fumador activo o no, y su Sexo biológico.
 AUNQUE NO PARECE TAAAAN SIGNIFICATIVA VER SI ESTA BIEN HECHO
