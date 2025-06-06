@@ -253,7 +253,7 @@ summary(mod_5)
 Para conocer el comportamiento de los datos recolectados, sobre la variable edad se realiza una categorización 
 
 
-```{r tabla-sexo, echo = F}
+```{r tabla-edad, echo = F}
 
 datos %>% 
   group_by(edad_c) %>% 
@@ -282,7 +282,7 @@ graf_edad_box <- datos %>%
   group_by(edad_c) %>% 
   ggplot(aes(x = edad_c, y = tiempo, fill = "pink3")) + 
   geom_boxplot() +
-  labs (title ='Grafico : tiempos de supervivencia según sexo',
+  labs (title ='Tiempos de supervivencia según sexo',
         x = "Edad",
         y = "Tiempo (en meses)") +
   theme_bw() +
@@ -292,7 +292,7 @@ graf_edad_box <- datos %>%
 
 ```{r test-tendencia-edadc,echo = F}
 
-titulo1 <- str_wrap("Figura : Probabilidad de supervivencia estimada según edades de los pacientes", width = 40)
+titulo1 <- str_wrap("Probabilidad de supervivencia estimada según edades de los pacientes", width = 40)
 
 graf_edad_km <- ggsurvplot(fit = mod_1, data = datos,
            title = titulo1,
@@ -300,7 +300,7 @@ graf_edad_km <- ggsurvplot(fit = mod_1, data = datos,
            conf.int = F, 
            censor.shape = 20,
            xlab = "Tiempo (en meses)", 
-           ylab = "Probabilidad de supervivencia estimada", 
+           ylab = "Supervivencia estimada", 
            pval = T,
            pval.method = T,
            pval.coord = c(45, .8),
@@ -387,10 +387,9 @@ Puede verse en la Tabla \@ref(tab:tabla-sexo) que más de la mitad de los pacien
 # Boxplot fumadores:
 graf_fumadores_box <- datos %>% 
   group_by(fumador) %>% 
-  ggplot(aes(x = fumador, y = tiempo, fill = fumador)) + 
+  ggplot(aes(x = fumador, y = tiempo, fill = "pink3")) + 
   geom_boxplot() +
-  scale_fill_manual(values = c("#92C5DE", "#F4A582"))+
-  labs (title ='No Fumadores vs Fumadores',
+  labs (title ='Tiempos de supervivencia de fumadores vs no fumadores',
         x = "Fumador",
         y = "Tiempo (en meses)") +
   scale_x_discrete(label = c("No", "Si")) +
@@ -401,10 +400,13 @@ graf_fumadores_box <- datos %>%
 
 ```{r grafsup3, echo = F, fig.cap = 'Supervivencia estimada por Kaplan-Meier según si los pacientes son fumadores activos o no',out.width='70%', cache = T}
 
+titulo3 <- str_wrap("Probabilidad de supervivencia estimada segun paciente es fumador activo o no", width = 40)
+
 graf_fumadores_km <- ggsurvplot(fit = mod_3, data = datos,
+           title = titulo3,
            censor.shape = 20,
            xlab = "Meses",
-           ylab = "Probabilidad de Supervivencia estimada",
+           ylab = "Supervivencia estimada",
            legend.labs = c("No Fumador", "Fumador"),
            legend.title = "")
 
@@ -457,13 +459,10 @@ datos %>%
 # Boxplot actividad:
 graf_actividad_box <- datos %>% 
   group_by(actividad) %>% 
-  ggplot(aes(x = actividad, y = tiempo, fill = actividad)) + 
-  geom_boxplot() +
-  scale_fill_manual(values = c("#92C5DE", "#F4A582", "red"))+
-  labs (title ='Niveles de actividad',
+  ggplot(aes(x = actividad, y = tiempo, fill = "pink3")) + 
+  geom_boxplot() +  labs (title ='Tiempo de supervivencia para los niveles de actividad',
         x = "Nivel de actividad",
         y = "Tiempo (en meses)") +
-  scale_x_discrete(label = c("Alta", "Baja", "Moderada")) +
   theme_bw() +
   theme(legend.position = "none") 
 
@@ -471,12 +470,15 @@ graf_actividad_box <- datos %>%
 
 
 ```{r grafsup4, echo = F, fig.cap = 'Supervivencia de los pacientes estimada por Kaplan-Meier de acuerdo a los niveles de actividad física', out.width='70%', cache = T}
+titulo4 <- str_wrap("Probabilidad de supervivencia estimada para distintos niveles de actividad física del paciente", width = 40)
+
 
 # ORDENAR ALTA MODERADA BAJA O BAJA MODERADA ALTA
 graf_actividad_km <- ggsurvplot(fit = mod_4, data = datos,
            censor.shape = 20,
-           xlab = "Meses",
-           ylab = "Probabilidad de Supervivencia estimada",
+           title = titulo4,
+           xlab = "Tiempo (en meses)",
+           ylab = "Supervivencia estimada",
            legend.labs = c("Alta", "Baja", "Moderada"),
            legend.title = "")
 
@@ -499,9 +501,9 @@ Algunas cantidades de comorbilidades fueron poco frecuentes entre los pacientes,
 ```{r boxplot-com_c, echo = F, cache = T}
 graf_comor_box <- datos %>% 
   group_by(com_c) %>% 
-  ggplot(aes(x = com_c, y = tiempo, fill = "orange3")) + 
+  ggplot(aes(x = com_c, y = tiempo, fill = "pink3")) + 
   geom_boxplot() +
-  labs (title ='Gráfico : comorbilidades',
+  labs (title ='Tiempos de supervivencia para diferentes niveles de comorbilidades',
         x = "Comorbilidades",
         y = "Tiempo (en meses)") +
  # scale_x_discrete(label = c("No", "Si")) +
@@ -540,11 +542,13 @@ kable(
 ```
 
 ```{r Supervivencia_M5, out.width='70%', echo = F}
+titulo5 <- str_wrap("Probabilidad de supervivencia estimada para distintos niveles de comorbilidades del paciente", width = 40)
 
 graf_comor_km <- ggsurvplot(fit = mod_5, data = datos,
            censor.shape = 20,
-           xlab = "Meses",
-           ylab = "Probabilidad de Supervivencia estimada",
+           title = titulo5,
+           xlab = "Tiempo (en meses)",
+           ylab = "Supervivencia estimada",
            legend.labs = levels(datos$com_c),
            legend.title = "Comorbilidades")
 
@@ -562,6 +566,7 @@ En la Tabla \@ref(tab:tabla-comorbilidad) puede verse que mucha gente presentó 
 
 
 \newpage
+
 
 
 # Modelo
@@ -590,6 +595,7 @@ $$
 H_1) La \; experiencia \; de\; supervivencia \; no \; es \; la \; misma\;
 para \; los \; individuos \; de \; un \; grupo \; que \; otro
 $$
+
 ```{r log-rank, include = F}
 # Test log-rank:
 
@@ -765,52 +771,6 @@ mod_orden <- coxph(Surv(tiempo, complicacion) ~ fumador + edad_c,
 ```
 
 
-```{r graficos-supervivencia, echo = F}
-# GRAFICOS DE SUPERVIVENCIA:
-
-# Modelo nulo:
-ggsurvplot(fit = mod_0, data = datos,
-           censor.shape = 20,
-           xlab = "Tiempo (en meses)",
-           ylab = "Probabilidad de Supervivencia estimada",
-           legend = "none",
-           legend.title = "Gr")
-
-
-# Modelo con edad:
-ggsurvplot(fit = mod_1, data = datos,
-           censor.shape = 20,
-           xlab = "Meses",
-           ylab = "Probabilidad de Supervivencia estimada",
-         #  legend.labs = c("Femenino", "Masculino"),
-           legend.title = "")
-
-
-# Modelo con sexo:
-ggsurvplot(fit = mod_2, data = datos,
-           censor.shape = 20,
-           xlab = "Meses",
-           ylab = "Probabilidad de Supervivencia estimada",
-           legend.labs = c("Femenino", "Masculino"),
-           legend.title = "")
-
-# Modelo con fumador:
-ggsurvplot(fit = mod_3, data = datos,
-           censor.shape = 20,
-           xlab = "Meses",
-           ylab = "Probabilidad de Supervivencia estimada",
-           legend.labs = c("No Fumador", "Fumador"),
-           legend.title = "")
-
-# Modelo con actividad:
-ggsurvplot(fit = mod_4, data = datos,
-           censor.shape = 20,
-           xlab = "Meses",
-           ylab = "Probabilidad de Supervivencia estimada",
-           legend.labs = c("Alta", "Baja", "Moderada"),
-           legend.title = "")
-
-```
 
 Se utilizó el _Test de Razón de Verosimilitud_, con hipótesis de la forma:
 $$
@@ -834,28 +794,6 @@ modelos
 
 ```
  
-```{r pvalues-tests, include = F}
-# # Lo mismo pero con p-values:
-# pvalues <- as.data.frame(rbind(pchisq(-2*modc_1$loglik[2], 
-#                                       df = 1, lower.tail = F),
-#                                pchisq(-2*modc_2$loglik[2], df = 1,
-#                                       lower.tail = F),
-#                                pchisq(-2*modc_3$loglik[2], df = 1,
-#                                       lower.tail = F),
-#                                pchisq(-2*modc_4$loglik[2], df = 1,
-#                                       lower.tail = F),
-#                                pchisq(-2*modc_5$loglik[2], df = 1,
-#                                       lower.tail = F)))
-# 
-# 
-# 
-# colnames(pvalues) <- "p-value"
-# 
-# row.names(pvalues) <- c( 'Edad', 'Sexo', 'Fumador', 'Actividad', 'Comorbilidades')
-# 
-# pvalues
-
-```
 
 Se incluye la variable edad $(p < 0.05)$ 
 
@@ -887,11 +825,14 @@ ggsurvplot(fit = mod_0, data = datos,
 ```
 \vspace{2em}  
 
--   Modelo 1: sólo con edad  <!-- VER SI HAY QUE CATEGORIZAR EDAD --> 
+-   Modelo 1: sólo con edad  
+
+
 $$
     h_i(t) = h_0 (t) \cdot e^{\beta_1 \cdot x_i} \quad i = \overline{1,110}
 $$
-<!-- CATEGORIZAR EDADES -->
+
+
 ```{r supervivencia1, include = F}
 # Para graficar:
 # Calcula la función de supervivencia
@@ -969,11 +910,7 @@ pchisq(-2*(modc_0$loglik[1] - modc_2$loglik[2]),
 
 ```
 
-<!-- VER SI DEJAR O BORRAR
-$$ 
-p-value > 0.05 \Rightarrow  \;No \; Rechazo \; H_0
-$$
- -->
+
 La variable Sexo no aporta significativamente a la explicación del tiempo de supervivencia de los pacientes (p > 0.05)
 
 
