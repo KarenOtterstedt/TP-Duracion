@@ -246,6 +246,12 @@ mod_5 <- survfit(Surv(tiempo, complicacion) ~ com_c,
                  data = datos)
 summary(mod_5)
 
+# Modelo Edad y Fumador
+modc_6 <- coxph(Surv(tiempo, complicacion) ~ edad_c + fumador, 
+               ties = "breslow", data = datos)
+summary(modc_6)
+
+
 ```
 
 
@@ -709,6 +715,31 @@ h_i (t) = h_0(t) \cdot e^{\beta_0 + \beta_1 \cdot x_i .....}
 $$
 
 
+\newpage
+
+# Evaluación de supuestos
+
+```{r evaluacion}
+ibrary(corrplot) 
+corrplot 0.95 loaded
+# Calculo de residuos de Schoenfeld (para verificar supuesto de riesgos proporcionales):
+ 
+ residuos <- datos %>% 
+     filter(complicacion != 0) %>%  
+     mutate(edad = residuals(modc_6, type = 'scaledsch')[, 1],
+            fumador = residuals(modc_6, type = 'scaledsch')[, 2],
+            ltime = log(tiempo)) %>% 
+     select(tiempo, ltime,edad,fumador)
+ 
+# Grafico de residuos de schoenfeld para edad:
+ # Si hay tendencia en el tiempo habría violación del supuesto de riesgos proporcionales
+ plot(residuos$edad ~ residuos$tiempo, pch = 16, lwd = 2, xlab = "Tiempo", ylab = "Res. Schoenfeld esc. + beta estim", ylim = c(-.2, .2), xlim = c(0,100))
+ # Trazar la curva suavizada en el gráfico
+ lines(smooth.spline(residuos$tiempo, residuos$edad, spar = 1), col = "black",lwd=2)
+ 
+ # Correlaciones (busca asociación entre residuos y tiempo, si hay eso implica violación de supuestos):
+ cor(residuos)```
+
 
 \newpage
 
@@ -1107,13 +1138,6 @@ $$
 $$
 
 
-```{r Modelo6-Edad-Fumador, include = F}
- # VER SI PONER O NO, MEDIO QUE YA ESTA HECHO ARRIBA
-modc_6 <- coxph(Surv(tiempo, complicacion) ~ edad_c + fumador, 
-               ties = "breslow", data = datos)
-summary(modc_6)
-
-```
 
 ```{r fumadores-vs-edad, include = F}
 # Modelo reducido (edad) vs modelo completo(edad y fumadores)
@@ -1159,8 +1183,7 @@ summary(modc_7)
 -2*(modc_6$loglik[2] - modc_7$loglik[2]) 
 qchisq(.95,4)
 ```
-Parece significativo $(p < 0.05)$ usar un modelo que contenga la Edad del paciente, si es Fumador activo o no, y su Sexo biológico.
-AUNQUE NO PARECE TAAAAN SIGNIFICATIVA VER SI ESTA BIEN HECHO
+
 
 -   Modelo 8: Edad, Fumador y Actividad
 $$
@@ -1183,8 +1206,6 @@ summary(modc_8)
 -2*(modc_6$loglik[2] - modc_8$loglik[2])
 qchisq(0.95,5)
 ```
-LA SENTENCIA DEL SUMMARY TIRA ALGO, PERO CUANDO LO CALCULO A MANO DA BAJO VER
-No agregaría nivel de actividad ni sexo
 
 \vspace{2em}  
 
@@ -1210,29 +1231,6 @@ summary(modc_9)
 -2*(modc_6$loglik[2] - modc_9$loglik[2])
 qchisq(0.95,5)
 ```
-Lo mismo que antes, a mano me da chico, diría de no agregarlo, pero la sentencia me da significativa !!!!
-
-
-\vspace{2em}  
-
-****
-Ninguno dio muy significativo, sexo dio un poco significativo, pero tampoco siento que sea taaaan importante ni taaan significativo como para agregarlo VER QUE HACER (si nos quedan 3 variables creo que habría que ver si agregamos las otras o no, y después ver si hay interacción o no)
-****
-
-
-
-```{r}
-#residuos <- datos %>% 
-#  filter(complicacion != 0) %>%  
-#mutate(edad = residuals(modelo, type = 'scaledsch')[, 1],
-#         fumador = residuals(modelo, type = 'scaledsch')[, 2],
-#         ltime = log(tiempo)) %>% 
-#  select(tiempo, ltime, edad ,fumador)
-```
-
-
-\newpage
-
 
 
 
