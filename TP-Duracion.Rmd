@@ -567,34 +567,12 @@ En la Tabla \@ref(tab:tabla-comorbilidad) puede verse que mucha gente presentó 
 
 \newpage
 
+# Evaluación de variables premodelización
 
+## _Test logrank_
 
-# Modelo
+Se realizó el test logrank para las variables categoricas que no poseen ningun tipo de orden.
 
-
-$$
-h_i (t) = h_0(t) \cdot e^{\beta_0 + \beta_1 \cdot x_i .....}
-$$
-
-
-
-\newpage
-
-# Anexo
-
-<!-- ESTIMAMOS Y COMPARAMOS SUPERVIVENCIA ANTES DE VER MODELOS -->
-
-<!-- Test log-rank para variables categóricas sin orden -->
-_Test log-rank_
-$$
-H_0) La \; experiencia \; de\; supervivencia \; es \; la \; misma\;
-para \; los \; individuos \; de \; un \; grupo \; que \; otro
-$$
-
-$$
-H_1) La \; experiencia \; de\; supervivencia \; no \; es \; la \; misma\;
-para \; los \; individuos \; de \; un \; grupo \; que \; otro
-$$
 
 ```{r log-rank, include = F}
 # Test log-rank:
@@ -634,34 +612,20 @@ log_rank %>%
 ```
 
 Los tiempos de supervivencia de los pacientes parecen ser significativamente diferentes entre aquellos que fuman y los que no. Sin embargo, no parece haber diferencias significativas entre los tiempos de supervivencia de los pacientes de sexo masculinos y las pacientes de sexo femeninas.
-<!-- VER SEXO -->
 
 
+## _Test de tendencia_
 
+Se realizó el test de tendencia para las variables categoricas que si tienen un orden especifico de antemano.
 
-<!-- Test de tendencia para variables con ordenamiento -->
-
-
-_Test de Tendencia_
-$$
-H_0) No \; hay \; ordenamiento \; en\; las \;curvas \;de \; supervivencia\; para \; los \; individuos
-$$
-$$
-H_1) Hay \; ordenamiento \; en\; las \;curvas \;de \; supervivencia\; para \; los \; individuos 
-$$
-<!-- Para actividad y para comorbilidades -->
-
-
-Hay diferencias significativas en el tiempo de supervivencia de los pacientes que presentaron de 40 a 60 años, 60 a 70, y mayores de 70.
-
-
+### Comorbilidades
 
 ```{r test-tendencia-comorbilidades,echo = F}
 
-titulo <- str_wrap("Figura : Probabilidad de supervivencia estimada según cantidad de comorbilidades", width = 40)
+titulo6 <- str_wrap("Figura : Probabilidad de supervivencia estimada según cantidad de comorbilidades", width = 40)
 
 ggsurvplot(fit = mod_5, data = datos,
-           title = titulo,
+           title = titulo6,
            # title = "Figura : Probabilidad de supervivencia estimada \n según cantidad de comorbilidades",
         #   palette = c("coral", "lightblue", "lightgreen"), 
            conf.int = F, 
@@ -679,11 +643,107 @@ ggsurvplot(fit = mod_5, data = datos,
            legend.title="")
 ```
 
+
 No parece haber diferencias significativas entre el tiempo de supervivencia de los pacientes que presentaron pocas, moderadas y muchas comorbilidades. Tampoco parece haber diferencias significativas entre los tiempos de supervivencia de los pacientes de acuerdo a los niveles de actividad física que realizaron.
 
 
-<!-- VER QUE DECIR DE SEXO PORQUE ESTÁ AL BORDE -->
+### Actividad
 
+
+```{r test-tendencia-actividad,echo = F}
+
+titulo7 <- str_wrap("Figura : Probabilidad de supervivencia estimada según nivel de actividad física del paciente", width = 40)
+
+ggsurvplot(fit = mod_4, data = datos,
+           title = titulo7,
+           # title = "Figura : Probabilidad de supervivencia estimada \n según cantidad de comorbilidades",
+        #   palette = c("coral", "lightblue", "lightgreen"), 
+           conf.int = F, 
+           censor.shape = 20,
+           xlab = "Tiempo (en meses)", 
+           ylab = "Probabilidad de supervivencia estimada", 
+           pval = T,
+           pval.method = T,
+           pval.coord = c(45, 0.8),
+           pval.method.coord = c(45, 1),
+           test.for.trend = T,
+           legend.title="")
+```
+
+
+
+### Edad
+
+```{r test-tendencia-edad,echo = F}
+
+titulo8 <- str_wrap("Figura : Probabilidad de supervivencia estimada según edad del paciente", width = 40)
+
+ggsurvplot(fit = mod_1, data = datos,
+           title = titulo8,
+           # title = "Figura : Probabilidad de supervivencia estimada \n según cantidad de comorbilidades",
+        #   palette = c("coral", "lightblue", "lightgreen"), 
+           conf.int = F, 
+           censor.shape = 20,
+           xlab = "Tiempo (en meses)", 
+           ylab = "Probabilidad de supervivencia estimada", 
+           pval = T,
+           pval.method = T,
+           pval.coord = c(45, 0.8),
+           pval.method.coord = c(45, 1),
+           test.for.trend = T,
+           legend.title="")
+```
+
+
+Hay diferencias significativas en el tiempo de supervivencia de los pacientes que presentaron de 40 a 60 años, 60 a 70, y mayores de 70.
+
+
+
+\newpage
+
+# Modelo
+
+
+$$
+h_i (t) = h_0(t) \cdot e^{\beta_0 + \beta_1 \cdot x_i .....}
+$$
+
+
+
+\newpage
+
+# Anexo
+
+<!-- ESTIMAMOS Y COMPARAMOS SUPERVIVENCIA ANTES DE VER MODELOS -->
+
+<!-- Test log-rank para variables categóricas sin orden -->
+_Test log-rank_
+$$
+H_0) La \; experiencia \; de\; supervivencia \; es \; la \; misma\;
+para \; los \; individuos \; de \; un \; grupo \; que \; otro
+$$
+
+$$
+H_1) La \; experiencia \; de\; supervivencia \; no \; es \; la \; misma\;
+para \; los \; individuos \; de \; un \; grupo \; que \; otro
+$$
+
+
+
+
+
+
+
+<!-- Test de tendencia para variables con ordenamiento -->
+
+
+_Test de Tendencia_
+$$
+H_0) No \; hay \; ordenamiento \; en\; las \;curvas \;de \; supervivencia\; para \; los \; individuos
+$$
+$$
+H_1) Hay \; ordenamiento \; en\; las \;curvas \;de \; supervivencia\; para \; los \; individuos 
+$$
 
 
 
@@ -1096,7 +1156,8 @@ modc_7 <- coxph(Surv(tiempo, complicacion) ~ edad_c + fumador + sexo,
                ties = "breslow", data = datos)
 summary(modc_7)
 
--2 * (modc_6$loglik[2] - modc_7$loglik[2])
+-2*(modc_6$loglik[2] - modc_7$loglik[2]) 
+qchisq(.95,4)
 ```
 Parece significativo $(p < 0.05)$ usar un modelo que contenga la Edad del paciente, si es Fumador activo o no, y su Sexo biológico.
 AUNQUE NO PARECE TAAAAN SIGNIFICATIVA VER SI ESTA BIEN HECHO
@@ -1120,6 +1181,7 @@ summary(modc_8)
 # Test de verosimilitud:
 # -2*log(reducido) - log(completo)
 -2*(modc_6$loglik[2] - modc_8$loglik[2])
+qchisq(0.95,5)
 ```
 LA SENTENCIA DEL SUMMARY TIRA ALGO, PERO CUANDO LO CALCULO A MANO DA BAJO VER
 No agregaría nivel de actividad ni sexo
@@ -1146,6 +1208,7 @@ summary(modc_9)
 # Test de verosimilitud:
 # -2*log(reducido) - log(completo)
 -2*(modc_6$loglik[2] - modc_9$loglik[2])
+qchisq(0.95,5)
 ```
 Lo mismo que antes, a mano me da chico, diría de no agregarlo, pero la sentencia me da significativa !!!!
 
@@ -1157,6 +1220,15 @@ Ninguno dio muy significativo, sexo dio un poco significativo, pero tampoco sien
 ****
 
 
+
+```{r}
+#residuos <- datos %>% 
+#  filter(complicacion != 0) %>%  
+#mutate(edad = residuals(modelo, type = 'scaledsch')[, 1],
+#         fumador = residuals(modelo, type = 'scaledsch')[, 2],
+#         ltime = log(tiempo)) %>% 
+#  select(tiempo, ltime, edad ,fumador)
+```
 
 
 \newpage
