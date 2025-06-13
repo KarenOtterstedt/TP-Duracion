@@ -1,6 +1,6 @@
 ---
-title: ""
-authors: ""
+title: "Trabajo Práctico Análisis de Duración 2025"
+authors: "Karen Otterstedt Juan Reines Urieles"
 date: "2025-05-16"
 output:
   bookdown::pdf_document2:
@@ -16,23 +16,6 @@ output:
 ---
 
 
-```{=tex}
-\begin{titlepage}
-\centering
-\vspace*{4cm} % espacio superior
-
-{\Huge \textbf{Trabajo Práctico Análisis de Duración}}\\[2cm]
-
-{\Large Karen Otterstedt}\\[0.5cm]
-{\Large Juan Sebastian Reines}\\[0.5cm]
-
-
-\vfill
-
-\end{titlepage}
-```
-
-
 \newpage
 
 
@@ -42,7 +25,6 @@ output:
 # ⌂ Referenciar tablas
 # ⌂ Centrar captions (de tablas y figuras)
 # ⌂ Mejorar captions
-# !(⌂) Terminar de armar modelos y elegir uno
 # !(⌂) RH, IC, etc
 # !(⌂) Conclusiones
 # (⌂) PONEMOS CUANTILES??
@@ -104,6 +86,15 @@ library(ggpubr)    # Manejo de gráficos con ggplot (o ggsurvplot)
 
 datos <- read_csv("conjunto_grupo_7.csv")
 summary(datos)
+
+# Función que calcula porcentajes:
+porcentaje <- function(n, cant, dec){
+  # n: cantidad total
+  # cant: cantidad de elementos que interesan
+  # dec: cantidad de decimales a usar
+  porcentaje <- cant / n * 100
+  return(round(porcentaje, digits = dec))
+}
 
 ```
 
@@ -216,7 +207,40 @@ Se recolectaron las siguientes variables:
 
 # Análisis Descriptivo
 
-```{r supervivencia-modelos, include = F, echo=FALSE}
+```{r censuras, echo=F, cache=FALSE}
+
+complic <- c(porcentaje(110, sum(datos$complicacion == 0), dec = 2),
+             100 - porcentaje(110, sum(datos$complicacion == 0), dec = 2))
+
+
+# Crear data frame
+df <- data.frame(
+  categoria = c("Censura", "Complicación"),
+  porcentaje = complic
+)
+
+# Calcular posición para las etiquetas
+df$pos <- c(92, 45)
+
+# Gráfico con etiquetas
+  ggplot(df, aes(x = "", y = porcentaje, fill = categoria)) +
+  geom_col(width = 1, color = "black") +
+  coord_polar("y") +
+  theme_void() +
+  geom_text(aes(label = paste0(format(porcentaje, 
+                                      decimal.mark =","), "%")),
+            y = df$pos,
+            color ="black", size = 5) +
+    scale_fill_manual(values = c("pink2", "lightblue2"))+
+  labs(title = "Gráfico 1: Pacientes censurados",
+       fill = "Categoría")
+
+```
+
+La mayoría de los pacientes no fueron censurados.
+
+
+```{r supervivencia-modelos, cache=FALSE, include=F}
 # Modelos para graficar:
 
 # Modelo Nulo
@@ -256,7 +280,6 @@ summary(modc_6)
 
 
 ## *Edad*
-Para conocer el comportamiento de los datos recolectados, sobre la variable edad se realiza una categorización 
 
 
 ```{r tabla-edad, echo = F}
@@ -279,7 +302,6 @@ mutate(sexo = str_to_title(as.character(edad_c))) %>%
   kable_styling(latex_options = "hold_position",
                 bootstrap_options = c("striped", "hover", "condensed")) %>%
   column_spec(2, width = "3cm")
-
 
 ```
 
@@ -720,8 +742,8 @@ $$
 # Evaluación de supuestos
 
 ```{r evaluacion}
-ibrary(corrplot) 
-corrplot 0.95 loaded
+library(corrplot) 
+
 # Calculo de residuos de Schoenfeld (para verificar supuesto de riesgos proporcionales):
  
  residuos <- datos %>% 
@@ -733,13 +755,16 @@ corrplot 0.95 loaded
  
 # Grafico de residuos de schoenfeld para edad:
  # Si hay tendencia en el tiempo habría violación del supuesto de riesgos proporcionales
- plot(residuos$edad ~ residuos$tiempo, pch = 16, lwd = 2, xlab = "Tiempo", ylab = "Res. Schoenfeld esc. + beta estim", ylim = c(-.2, .2), xlim = c(0,100))
+ plot(residuos$edad ~ residuos$tiempo, pch = 16, lwd = 2, xlab = "Tiempo", ylab = "Res. Schoenfeld esc. + beta estim", 
+      ylim = c(-.2, .2),
+      xlim = c(0,100)) 
  # Trazar la curva suavizada en el gráfico
- lines(smooth.spline(residuos$tiempo, residuos$edad, spar = 1), col = "black",lwd=2)
+ lines(smooth.spline(residuos$tiempo, residuos$edad, spar = 1),
+       col = "black",lwd=2)
  
  # Correlaciones (busca asociación entre residuos y tiempo, si hay eso implica violación de supuestos):
- cor(residuos)```
-
+ cor(residuos)
+```
 
 \newpage
 
