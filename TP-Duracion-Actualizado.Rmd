@@ -252,7 +252,7 @@ df$pos <- c(92, 45)
 # Gráfico con etiquetas
   ggplot(df, aes(x = "", y = porcentaje, fill = categoria)) +
   geom_col(width = 1, color = "black") +
-  coord_polar("y") +
+    coord_polar("y") +
   theme_void() +
   geom_text(aes(label = paste0(format(porcentaje, 
                                       decimal.mark =","), "%")),
@@ -302,7 +302,7 @@ Para simplificar el conocimiento el comportamiento de los tiempos de acuerdo a l
 ```{r tabla-edad, echo = F}
 
 datos %>% 
-  group_by(edad_c) %>% 
+  group_by(Edad = edad_c) %>% 
   # Para que ponga las primeras letras en mayúscula:
   summarise(Porcentaje = n() / 110 * 100) %>% 
     mutate(
@@ -363,7 +363,7 @@ graf_edad_km
 A partir de la curva de supervivencia estimada por Kaplan-Meier para los grupos etarios categorizados (Figura \@ref(fig:test-tendencia-edadc)), y luego de hacer el test de tendencia, se concluye que hay diferencias significativas $(p < 0.05)$ en el tiempo de supervivencia que presentaron los pacientes de las distintas categorías de edad.
 
 
-```{r tabla-sexo, echo = F}
+```{r tabla-sexo, include = F}
 
 datos %>% 
   group_by(sexo) %>% 
@@ -411,13 +411,8 @@ graf_sexo_km
 ```{r}
 # grid.arrange(graf_sexo_box, graf_sexo_km$plot, ncol = 2)
 ```
-
-Las pacientes de sexo femenino presentan tiempos mayores que sus contrapartes masculinas (Tabla \@ref(tab:tabla-sexo))  \footnote{63 pacientes de sexo femenino, 47 de sexo masculino}
+Entre los pacientes, hay un porcentaje mayor de mujeres (57.27%) que de hombres.
 Además, hasta aproximadamente el tercer año, los tiempos de supervivencia de los hombres resultan menores que los de las mujeres (Figura \@ref(fig:grafsup2)). Aproximadamente en el cuarto año, los tiempos de supervivencia parecen equipararse.
-
-
-
-
 
 <!-- FUMADORES -->
 
@@ -456,7 +451,18 @@ graf_fumadores_km
 # grid.arrange(graf_fumadores_box, graf_fumadores_km$plot, ncol = 2)
 ```
 
-Entre los pacientes que padecen cierta enfermedad crónica respiratoria aquellos que fuman activamente presentan menores tiempos de supervivencia (Figura \@ref(fig:grafsup3)) que los que no son fumadores activos.
+```{r tabla-fumador, include = F}
+
+datos %>% 
+  group_by(Fumador = fumador) %>% 
+  # Para que ponga las primeras letras en mayúscula:
+  summarise(Porcentaje = n() / 110 * 100) %>% 
+    mutate(
+    across(where(is.numeric), # Para que sólo use 2 decimales
+           ~round(.x, 2))) 
+
+```
+Entre los pacientes que padecen cierta enfermedad crónica respiratoria aquellos que fuman activamente (el 55.45% de los pacientes) presentan menores tiempos de supervivencia (Figura \@ref(fig:grafsup3)) que los que no son fumadores activos.
 
 
 <!-- Actividad -->
@@ -469,7 +475,7 @@ datos %>%
     actividad = str_to_title(as.character(actividad)), 
         actividad = factor(actividad,
                        levels = c("Alta", "Moderada", "Baja"))) %>% 
-  group_by(actividad) %>% 
+  group_by(Actividad = actividad) %>% 
   summarise(Porcentaje = n() * 100 /110) %>%
   mutate(
     across(where(is.numeric), # Para que sólo use 2 decimales
@@ -524,16 +530,14 @@ graf_actividad_km
 # grid.arrange(graf_actividad_box, graf_actividad_km$plot, ncol = 2)
 ```
 
-
 Pocas personas de las que participaron en el estudio realizan un nivel de actividad física alto  (Tabla \@ref(tab:tabla-actividad)), sin embargo, no hay gran diferencia entre los tiempos de las personas que realizan actividad de niveles moderada y baja (Figura \@ref(fig:grafsup4)). Con un nivel de significación del 5%, se concluye que no hay diferencias en los tiempos de supervivencia para los diferentes niveles de actividad de los pacientes $(p  = 0.75)$.
 
 <!-- Creo que esto era por el boxplot:
 A pesar de que parece haber tiempos de supervivencia mayores para los pacientes que realizan altas cantidades de actividad física, esto puede deberse al número de personas que forman parte de este grupo. -->
 
-
 <!-- COMORBILIDADES -->
 
-Algunas cantidades de comorbilidades fueron poco frecuentes entre los pacientes, sólo 3 de los 110 no tuvieron, otros 3 presentaron 6, y sólo un paciente presentó 7, entre otros casos. Es por esto que se agruparon los pacientes de acuerdo a las $\text{Cantidades de  comorbilidades}"$ que padecieron, en tres niveles: pocas (0-2 comorbilidades), moderadas (3-4 comorbilidades) y muchas ( > 5 comorbilidades). \footnote{52 personas presentaron pocas, 45 cantidades moderadas de comorbilidades y sólo 13 pacientes presentaron muchas.}
+Algunas cantidades de comorbilidades fueron poco frecuentes entre los pacientes, sólo 3 de los 110 no tuvieron, otros 3 presentaron 6, y sólo un paciente presentó 7, entre otros casos. Es por esto que se agruparon los pacientes de acuerdo a las $\text{"Cantidades de  comorbilidades"}$ que padecieron, en tres niveles: pocas (0-2 comorbilidades), moderadas (3-4 comorbilidades) y muchas ( > 5 comorbilidades). \footnote{52 personas presentaron pocas, 45 cantidades moderadas de comorbilidades y sólo 13 pacientes presentaron muchas.}
 
 ```{r boxplot-com_c, echo = F, cache = T}
 # graf_comor_box <- datos %>% 
@@ -567,7 +571,6 @@ kable(
   kable_styling(latex_options = c("responsive", "hold_position"),
                 bootstrap_options = c("striped", "hover", "condensed")) %>%
   column_spec(2, width = "2cm")
-
 
 # Sólo hay una persona que presentó 7 comorbilidades así que no se puede calcular el desvío 
 
@@ -652,30 +655,28 @@ log_rank %>%
 
 ```
 
-
-
+\vspace{2em}
  _Test de tendencia_
 
 Las personas que pertenecen a grupos etarios diferentes, presentan diferencias significativas en sus tiempos hasta la ocurrencia de una complicación severa $(p < 0.05)$. A diferencia de los tiempos para los distintos niveles de actividad física de los pacientes $(p = 0.75)$ y las cantidades de comorbilidades categorizadas en pocas, moderadas y muchas $(p = 0.93)$.
-
 
 
 Por lo tanto, se puede sospechar que considerar si los pacientes fuman activamente o no y su edad son características relevantes que ayudan a explicar los tiempos hasta las complicaciones de los pacientes con enfermedades crónicas respiratorias. Incluso también se sospecha que el sexo podría ayudar a explicarlo. \footnote{El pvalue para sexo es cercano a 0.05, por lo que a pesar de ser superior, se podría conjeturar que es significativa. Cosa que se verifica en la selección de modelos (ver \hyperref[anexo]{Anexo}).}
 
 
 # Modelo
-El procedimiento de selección de modelo (Ver anexo), condujo al siguiente:
+El procedimiento de selección de modelo (Ver anexo), condujo al siguiente sin interacción $(p = 0.7501)$:
 
 $$
-    h_i(t)  = h_0(t) \cdot e^{\beta_1 \cdot x_i + \beta_3 \cdot f_i}
+  \large  h_i(t)  = h_0(t) \cdot e^{\beta_1 \cdot x_i + \beta_3 \cdot f_i}
 $$
 
 
 El modelo ajustado:
 
-\Large
+
 \begin{align*}
-     \hat{h_i}(t) & = \hat{h_0}(t) \cdot e^{\hat{\beta_1} \cdot x_i + \hat{\beta_3} \cdot f_i}  \\
+    \large \hat{h_i}(t) & = \hat{h_0}(t) \cdot e^{\hat{\beta_1} \cdot x_i + \hat{\beta_3} \cdot f_i}  \\
      & =  \hat{h_0}(t) \cdot e^{0.0762 \cdot x_i  \; + \; 1.2688 \cdot f_i}
 \end{align*}
 
@@ -686,39 +687,20 @@ Se conforma por las variables que resultan significativas, edad del paciente y s
 # Edad y Fumador:
 modc_6 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador, 
                 ties = "breslow", data = datos)
-
+summary(modc_6)
 modc_6$coefficients
+
 ```
 
 El riesgo de sufrir una complicación severa para pacientes que sufren de enfermedades respiratorias crónicas, son residentes de la zona _Patagónica_, fumadores activos y de cierta edad es 3.56 veces el riesgo de los pacientes que habitan en la misma región, no fuman y son de la misma edad.
 
+También puede decirse que el riesgo de sufrir una complicación severa para personas de cierta edad es 47% menos que para personas 10 años mayores con igual hábito tabáquico.
 
-
-<!-- VER DE PONER EN EL ANEXO
-PARA FUMADOR: -->
-\Large
-\begin{align*}
-    \hat{RH}_{\substack{\text{fumador} \\ \text{vs} \\ \text{no fumador}}}(t) & = \frac{h_i(t, fumador = 1, edad = e)} {h_i(t, fumador = 0, edad = e)}   \\
-     & = \frac{h_0 (t) \cdot e^{0.0762 \cdot e + 1.2688 \cdot 1}} {h_0(t) \cdot e^{0.0762 \cdot e  \; + \; 1.2688 \cdot 0}} 
-     & = \frac{e^{1.2688}} {e^0} = e^{1.2688}
-\end{align*}
-
-
-<!-- PARA EDAD -->
-
-\Large
-\begin{align*}
-     \hat{RH}_{\substack{\text{edad} \\ \text{vs} \\ \text{edad +} \Delta}} (t) & = \frac{h_i(t, fumador = f_i, edad = e)} {h_i(t, fumador = f_i, edad = e + \Delta)}   \\
-     & = \frac{h_0 (t) \cdot e^{0.0762 \cdot e + 1.2688 \cdot f}} {h_0(t) \cdot e^{0.0762 \cdot (e + \Delta)  \; + \; 1.2688 \cdot f}}  
-     & = e^{-0.0762 \cdot \Delta}
-\end{align*}
-
-<!-- CREO QUE LA DIFERENCIA QUE HABÍAMOS HECHO ERA PARA MÁS O MENOS UN AÑO DE DIFERENCIA (ver diapos), HABRÍA QUE HACER PARA 5 O 10 QUE PARECERÍA MÁS INTERESANTE, O CAPAZ 15 O 20 -->
 
 
 # Evaluación de supuestos
 
-Luego de seleccionar un modelo, es esencial verificar que los supuestos a partir de los cuales es ajustado se verifiquen. En este caso, para un _Modelo de Cox_ debe comprobarse el supuesto de _Hazards Proporcionales_, puede verse (Figura)
+Luego de seleccionar un modelo, es esencial verificar que los supuestos a partir de los cuales es ajustado se verifiquen. En este caso, para un _Modelo de Cox_ debe comprobarse el supuesto de _Hazards Proporcionales_, puede verse (Figura \@ref(fig:evaluacion)) que se cumple el supuesto, por lo que el modelo seleccionado es válido.
 
 ```{r evaluacion, fig.cap = 'Residuos de Schoenfeld para edad vs tiempo', echo = F, out.width = '70%'}
 
@@ -754,13 +736,13 @@ También se realizó un test de residuos donde, con una significación del 5% se
 # Anexo {-}
 \label{anexo}
 
+## Tests
 <!-- Test log-rank para variables categóricas sin orden -->
 _Test log-rank_
 $$
 H_0)  \text{ La experiencia  de supervivencia  es  la  misma
 para  los  individuos  de  un  grupo  que  otro}
 $$
-
 $$
 H_1) \text{ La  experiencia  de supervivencia  no  es  la  misma
 para  los  individuos  de  un  grupo  que  otro}
@@ -775,7 +757,7 @@ $$
 H_0) \text{ No  hay  ordenamiento  en las curvas de  supervivencia para  los  individuos}
 $$
 $$
-H_1) \text{ Hay  ordenamiento  en las curvas de  supervivencia para  los  individuos  }
+H_1) \text{ Hay  ordenamiento  en las curvas de  supervivencia para  los  individuos}
 $$
 
 
@@ -879,11 +861,7 @@ modelos
 ```
  
 
-Se incluye la variable edad $(p < 0.05)$ 
-
-
-
-### Modelos de una variable
+### \large Modelos de una variable
 - Modelo nulo o basal:
   - edad = 0 
   - hombre
@@ -895,18 +873,12 @@ Se incluye la variable edad $(p < 0.05)$
 $$
 h_i(t) = h_0 (t) \quad i = \overline{1,110}
 $$
-
-
 \vspace{2em}  
 
 -   Modelo 1: sólo con edad  
-
-
 $$
     h_i(t) = h_0 (t) \cdot e^{\beta_1 \cdot x_i} \quad i = \overline{1,110}
 $$
-
-
 ```{r testm1, include = F}
 
 summary(modc_1)
@@ -921,16 +893,12 @@ pchisq(test_m1, df=2, lower.tail = FALSE)
 
 ```
 Se incluye la variable edad $(p < 0.05)$
-
 \vspace{2em}  
 
 -   Modelo 2: sólo con Sexo ($s_i$ = 0 hombre, $s_i$ = 1 mujer)
-
 $$
 h_i(t) = h_0 (t) \cdot e^{\beta_2 \cdot s_i} \quad i = \overline{1,110}
 $$
-
-
 
 ```{r testm2, include = F}
 
@@ -945,24 +913,13 @@ pchisq(-2*(modc_0$loglik[1] - modc_2$loglik[2]),
        df=1, lower.tail = FALSE)
 
 ```
-
-
-La variable Sexo no aporta significativamente a la explicación del tiempo de supervivencia de los pacientes $(p > 0.05)$.
-
-
+La variable Sexo no aporta significativamente a la explicación del tiempo de supervivencia de los pacientes $(p = 0.0879)$.
 \vspace{2em}  
 
 -   Modelo 3: sólo con Fumador ($f_i$ = 0 No fumador, $f_i$ = 1 Fumador)
-
 $$
 h_i(t) = h_0 (t) \cdot e^{\beta_3 \cdot f_i} \quad i = \overline{1,110}
 $$
-
-
-Los pacientes que no son fumadores muestran tiempos de supervivencia más altos que aquellos que sí fuman activamente.
-
-
-
 
 ```{r testm3, include = F}
 
@@ -975,110 +932,91 @@ summary(modc_3)
 
 
 ```
-
 La variable Fumador aporta significativamente a la explicación del tiempo de supervivencia de los pacientes $(p < 0.05)$.
+\vspace{2em}
 
-
+-   Modelo 4: sólo Actividad Física (Baja, Moderada o Alta)
 $$
 h_i(t) = h_0 (t) \cdot e^{\beta_4 \cdot a_{1i} +
                           \beta_5 \cdot a_{2i}} \quad i = \overline{1,110}
 $$
 
-
-No parece haber grandes diferencias en los tiempos de supervivencia de los pacientes que participaron del estudio que realizaban distintos niveles de actividad física.
-
-
 ```{r testm4, include = F}
 summary(modc_4)
-
 
 # Test de verosimilitud:
 # -2*log(reducido) - log(completo)
 -2*(modc_4$loglik[1] - modc_4$loglik[2])
+pchisq(-2*(modc_4$loglik[1] - modc_4$loglik[2]), df = 1, lower.tail = F)
 ```
+El nivel de actividad física que realice el paciente no aporta significativamente $(p = 0.6611)$
+\vspace{2em}  
 
-El nivel de actividad física que realice el paciente no aporta significativamente 
-$(p = 0.9)$
-
+-   Modelo 5: sólo con Comorbilidades (Pocas, Moderadas, Muchas)
 
 $$
 h_i(t) = h_0 (t) \cdot e^{\beta_5 \cdot c_{1i} +
                           \beta_6 \cdot c_{2i}}
   \quad i = \overline{1,110}
 $$
-
-
 ```{r Modelo5-comorbilidad, include = F}
-# Modelo para graficar
-# NO ME ACUERDO COMO CATEGORIZABA R VER QUE LO ESTEMOS PONIENDO IGUAL
-
 modc_5 <- coxph(Surv(tiempo, complicacion) ~ com_c,
                 data = datos, ties = "breslow")
 summary(modc_5)
-
 ```
 
+```{r modelo5-test, include = F}
 
-La cantidad de comorbilidades no parece afectar el tiempo de supervivencia de los pacientes $(p > 0.05)$
+# Test de verosimilitud:
+# -2*log(reducido) - log(completo)
+-2*(modc_5$loglik[1] - modc_5$loglik[2])
+pchisq(-2*(modc_5$loglik[1] - modc_5$loglik[2]), df = 1, lower.tail = F)
+```
+La cantidad de comorbilidades que padece un no parece afectar el tiempo de supervivencia de los pacientes $(p = 0.1577)$
+\vspace{3em}
 
-\vspace{4em}
-
-Dado que la Edad del paciente y si es Fumador activo o no, resultan significativas, resta analizar si ambos aportan en presencia del otro:
+Dado que la **edad** del paciente y si es **fumador** activo o no, resultan significativas, resta analizar si ambos aportan en presencia del otro:
 
 
 - Modelo 6: Edad y Fumador
-El modelo de dos variables resultante es el siguiente:
 $$
     h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot x_i + \beta_3 \cdot f_i}
 $$
-
-
 ```{r fumadores-vs-edad, include = F}
 # Modelo reducido (edad) vs modelo completo(edad y fumadores)
 -2*(modc_1$loglik[2] - modc_6$loglik[2])
+pchisq(-2*(modc_1$loglik[2] - modc_6$loglik[2]), df = 1, lower.tail = F)
 ```
-Si fuman o no aporta significativamente cuando está edad.
-<!-- VER SI DEJARLO ASÍ O USAR PVALUE -->
+Si fuman o no aporta significativamente cuando está edad $(p < 0.05)$.
 
 ```{r edad-vs-fumadores, include = F}
 # Modelo reducido (fumadores) vs modelo completo(edad y fumadores)
 -2*(modc_3$loglik[2] - modc_6$loglik[2])
-
+pchisq(-2*(modc_3$loglik[2] - modc_6$loglik[2]), df = 1, lower.tail = F)
 ```
-
-La edad también aporta cuando está fumador.
-
-
-la edad del paciente y si es fumador activo o no afecta al tiempo de supervivencia estimado $(p < 0.05)$.
-
-
+La edad también aporta cuando está fumador $(p < 0.05)$ .
 \vspace{2em}  
 
-
-
+### \large Modelos de tres variables:
 Ahora se analiza si es correcto agregar alguna variable en presencia de edad y fumador:
 
-
-
-### Modelos de tres variables:
 -   Modelo 7: Edad, Fumador y sexo
-
 $$
     h_i(t) = h_0(t) \cdot e^{\beta_1 \cdot x_i + \beta_3 \cdot f_i +
     \beta_2 \cdot s_i}
 $$
-
-
 ```{r Modelo7-Edad-Fumador-Sexo, include = F}
 # Haciendo el modelo de cox para edad, fumador y sexo:
-modc_7 <- coxph(Surv(tiempo, complicacion) ~ edad_c + fumador + sexo, 
+modc_7 <- coxph(Surv(tiempo, complicacion) ~ edad + fumador + sexo, 
                ties = "breslow", data = datos)
 summary(modc_7)
 
+# Test de verosimilitud:
+# -2*log(reducido) - log(completo)
 -2*(modc_6$loglik[2] - modc_7$loglik[2]) 
-qchisq(.95,4)
+qchisq(0.95, df = 1)
+pchisq(-2*(modc_6$loglik[2] - modc_7$loglik[2]), df = 1, lower.tail = F)
 ```
-
 
 -   Modelo 8: Edad, Fumador y Actividad
 $$
@@ -1091,13 +1029,12 @@ $$
 ```{r Modelo8-Edad-Fumador-Actividad, include = F}
 summary(modc_8)
 
-
 # Test de verosimilitud:
 # -2*log(reducido) - log(completo)
 -2*(modc_6$loglik[2] - modc_8$loglik[2])
 qchisq(0.95,5)
 ```
-
+La variable actividad no aporta significativamente cuando edad y fumador están en el modelo $(p < 0.05)$
 \vspace{2em}  
 
 
@@ -1107,18 +1044,67 @@ $$
                              \beta_3 \cdot f_i +
                              \beta_6 \cdot c_i}
 $$
-
-
 ```{r Modelo9-Edad-Fumador-Comorbilidades, include = F}
 summary(modc_9)
-
 
 # Test de verosimilitud:
 # -2*log(reducido) - log(completo)
 -2*(modc_6$loglik[2] - modc_9$loglik[2])
 qchisq(0.95,5)
 ```
+La variable Comorbilidades no aporta significativamente cuando Edad y Fumador están en el modelo $(p < 0.05)$.
 
+
+Para el modelo seleccionado (que contiene las variables edad y fumadores, se verifica si corresponde incluir interacción:
+
+```{r interaccion, include = F}
+modc6_interaccion <- coxph(Surv(tiempo, complicacion) ~ edad * fumador,ties = "breslow", data = datos)
+summary(modc6_interaccion)
+
+lik_interaccion <- -2*modc_6$loglik[2]+ 2*modc6_interaccion$loglik[2]
+
+# Los gl son la cantidad de parámetros adicionales que tiene el modelo más grande, osea el que tiene interacción, respecto al modelo más chico (3 - 2):
+pchisq(lik_interaccion, df = 1, lower.tail = F)
+
+```
+Dado que $(p = 0.7501)$, no resulta significativa la interacción, por lo que queda el modelo planteado previamente.
+
+
+### \large Razones de Hazard 
+
+Razón para fumadores vs no fumadores:
+\begin{align*}
+    \large \hat{RH}_{\text{\shortstack{fumador \\ vs \\ no fumador}}}(t) & = \frac{\hat{h_i}(t, fumador = 1, edad = e)} {\hat{h_i}(t, fumador = 0, edad = e)} \\
+     & = \frac{\hat{h_0} (t) \cdot e^{0.0762 \cdot e + 1.2688 \cdot 1}} {\hat{h_0}(t) \cdot e^{0.0762 \cdot e \; + \; 1.2688 \cdot 0}} \\
+     & = \frac{e^{1.2688}} {e^0} = e^{1.2688} = 3.56
+\end{align*}
+
+Intervalo de confianza: 
+$$
+IC_{e^{\beta_3}, 95\%} =(2.25, \; 5.63) 
+$$
+Como no cubre al 1, es correcto interpretarlo.
+
+
+Razón para distintas edades:
+
+\begin{align*}
+    \large \hat{RH}_{\text{\shortstack{edad \\ vs \\ edad + $\Delta$}}}(t) & = \frac{\hat{h_i}(t, fumador = f_i, edad = e)} {\hat{h_i}(t, fumador = f_i, edad = e + \Delta)} \\
+     & = \frac{\hat{h_0} (t) \cdot e^{0.0762 \cdot e + 1.2688 \cdot f}} {\hat{h_0}(t) \cdot e^{0.0762 \cdot (e + \Delta) \; + \; 1.2688 \cdot f}} \\
+     & = e^{-0.0762 \cdot \Delta}
+\end{align*}
+
+
+Para personas con 10 años de diferencia y mismo hábito tabáquico:
+\begin{align*}
+   \large \hat{RH}_{\text{\shortstack{edad \\ vs \\ edad + 10}}}(t) & = 
+     & = e^{-0.0762 \cdot 10} = 0.47
+\end{align*}
+Intervalo de confianza: 
+$$
+IC_{e^{\beta_1}, 95\%} = (0.37, \;0.59) 
+$$
+Dado que este intervalo tampoco cubre al 1, es correcto interpretarlo.
 
 
 
